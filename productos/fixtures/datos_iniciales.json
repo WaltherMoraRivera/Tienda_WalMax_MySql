@@ -1,0 +1,211 @@
+[
+  {
+    "model": "productos.categoria",
+    "pk": 1,
+    "fields": {
+      "nombre": "Pociones",
+      "descripcion": "Restauran los PS de tus Pokémon durante y después de las batallas."
+    }
+  },
+  {
+    "model": "productos.categoria",
+    "pk": 2,
+    "fields": {
+      "nombre": "Revivir",
+      "descripcion": "Devuelven a la batalla a los Pokémon debilitados."
+    }
+  },
+  {
+    "model": "productos.categoria",
+    "pk": 3,
+    "fields": {
+      "nombre": "Bayas",
+      "descripcion": "Frutos con efectos curativos y de ayuda para la captura."
+    }
+  },
+  {
+    "model": "productos.categoria",
+    "pk": 4,
+    "fields": {
+      "nombre": "Inciensos",
+      "descripcion": "Atraen Pokémon salvajes a tu ubicación durante un tiempo."
+    }
+  },
+  {
+    "model": "productos.categoria",
+    "pk": 5,
+    "fields": {
+      "nombre": "Huevos suerte",
+      "descripcion": "Potenciadores de experiencia para entrenadores dedicados."
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 1,
+    "fields": {
+      "nombre": "Poción",
+      "descripcion": "Restaura 20 PS de un Pokémon. La cura básica de todo entrenador.",
+      "precio": "300.00",
+      "stock": 120,
+      "imagen": "productos/pocion.png",
+      "categoria": 1,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 2,
+    "fields": {
+      "nombre": "Superpoción",
+      "descripcion": "Restaura 50 PS de un Pokémon. Ideal para batallas más exigentes.",
+      "precio": "500.00",
+      "stock": 80,
+      "imagen": "productos/superpocion.png",
+      "categoria": 1,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 3,
+    "fields": {
+      "nombre": "Hiperpoción",
+      "descripcion": "Restaura 200 PS de un Pokémon. Recomendada antes de un gimnasio.",
+      "precio": "800.00",
+      "stock": 45,
+      "imagen": "productos/hiperpocion.png",
+      "categoria": 1,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 4,
+    "fields": {
+      "nombre": "Poción Mágica",
+      "descripcion": "Restaura por completo los PS de un Pokémon al instante.",
+      "precio": "1200.00",
+      "stock": 20,
+      "imagen": "productos/pocion_magica.png",
+      "categoria": 1,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 5,
+    "fields": {
+      "nombre": "Revivir",
+      "descripcion": "Revive a un Pokémon debilitado, devolviéndole la mitad de sus PS máximos.",
+      "precio": "1500.00",
+      "stock": 30,
+      "imagen": "productos/revivir.png",
+      "categoria": 2,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 6,
+    "fields": {
+      "nombre": "Revivir Máximo",
+      "descripcion": "Revive a un Pokémon debilitado, devolviéndole todos sus PS.",
+      "precio": "2500.00",
+      "stock": 12,
+      "imagen": "productos/revivir_maximo.png",
+      "categoria": 2,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 7,
+    "fields": {
+      "nombre": "Baya Aranja",
+      "descripcion": "Cura por completo los PS de un Pokémon si se la das a comer.",
+      "precio": "200.00",
+      "stock": 200,
+      "imagen": "productos/baya_aranja.png",
+      "categoria": 3,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 8,
+    "fields": {
+      "nombre": "Baya Zidra",
+      "descripcion": "Facilita la captura de Pokémon difíciles de atrapar.",
+      "precio": "250.00",
+      "stock": 150,
+      "imagen": "productos/baya_zidra.png",
+      "categoria": 3,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 9,
+    "fields": {
+      "nombre": "Baya Meluce",
+      "descripcion": "Calma a un Pokémon salvaje y reduce sus posibilidades de huir.",
+      "precio": "350.00",
+      "stock": 90,
+      "imagen": "productos/baya_meluce.png",
+      "categoria": 3,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 10,
+    "fields": {
+      "nombre": "Incienso Suerte",
+      "descripcion": "Aumenta la aparición de Pokémon durante 30 minutos en zonas con poca actividad.",
+      "precio": "900.00",
+      "stock": 60,
+      "imagen": "productos/incienso_suerte.png",
+      "categoria": 4,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 11,
+    "fields": {
+      "nombre": "Incienso Limpio",
+      "descripcion": "Atrae Pokémon de tipo agua, planta y bicho con un aroma fresco y natural.",
+      "precio": "900.00",
+      "stock": 55,
+      "imagen": "productos/incienso_limpio.png",
+      "categoria": 4,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 12,
+    "fields": {
+      "nombre": "Incienso Fulgor",
+      "descripcion": "Emite un brillo especial que atrae Pokémon raramente vistos en la zona.",
+      "precio": "950.00",
+      "stock": 25,
+      "imagen": "productos/incienso_fulgor.png",
+      "categoria": 4,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  },
+  {
+    "model": "productos.producto",
+    "pk": 13,
+    "fields": {
+      "nombre": "Huevo Suerte",
+      "descripcion": "Duplica la experiencia obtenida durante 30 minutos de juego.",
+      "precio": "1000.00",
+      "stock": 40,
+      "imagen": "productos/huevo_suerte.png",
+      "categoria": 5,
+      "creado": "2026-09-20T12:00:00Z"
+    }
+  }
+]

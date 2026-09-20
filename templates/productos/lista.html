@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% comment %}
+  lista.html: pantalla "Read" del CRUD. Muestra todos los productos en una tabla
+  (similar a la Figura 1 de la guía) con botones para editar y eliminar cada uno.
+  La vista lista_productos le entrega la variable 'productos'.
+{% endcomment %}
+
+{% block titulo %}Productos{% endblock %}
+
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Lista de productos</h1>
+    <a href="{% url 'crear_producto' %}" class="btn btn-success">+ Nuevo producto</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-striped align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# Recorremos la lista de productos; por cada uno se dibuja una fila #}
+                {% for producto in productos %}
+                <tr>
+                    <td>
+                        {# Si el producto tiene imagen se muestra; si no, un texto de reemplazo #}
+                        {% if producto.imagen %}
+                            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}"
+                                 width="56" height="56" class="rounded" style="object-fit: contain;">
+                        {% else %}
+                            <span class="text-muted small">Sin imagen</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ producto.nombre }}</strong><br>
+                        <small class="text-muted">{{ producto.descripcion|truncatechars:60 }}</small>
+                    </td>
+                    {# producto.categoria.nombre: recorre la relación (ForeignKey) hasta la categoría #}
+                    <td>{{ producto.categoria.nombre }}</td>
+                    <td>${{ producto.precio|floatformat:"-2" }}</td>
+                    <td>{{ producto.stock }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'editar_producto' producto.pk %}" class="btn btn-success btn-sm">Editar</a>
+                        <a href="{% url 'eliminar_producto' producto.pk %}" class="btn btn-warning btn-sm">Eliminar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                {# {% empty %} se ejecuta cuando la lista viene vacía #}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        Aún no hay productos. Usa el botón «Nuevo producto» para agregar el primero.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

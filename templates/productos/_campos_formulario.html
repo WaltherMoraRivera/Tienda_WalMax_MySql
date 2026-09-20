@@ -1,0 +1,24 @@
+{% comment %}
+  _campos_formulario.html: fragmento REUTILIZABLE que dibuja los campos de un
+  formulario de Django con estilo Bootstrap. Se inserta en otras plantillas con
+  {% include 'productos/_campos_formulario.html' %}, así no repetimos el mismo
+  código en el formulario de productos y en el de contacto.
+  Espera la variable 'form' (el formulario).
+{% endcomment %}
+
+{# Errores generales del formulario (los que no pertenecen a un campo concreto) #}
+{% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+{% endif %}
+
+{# Recorremos cada campo del formulario #}
+{% for campo in form %}
+    <div class="mb-3">
+        <label for="{{ campo.id_for_label }}" class="form-label">{{ campo.label }}</label>
+        {{ campo }}
+        {# Mensajes de las validaciones personalizadas (los clean_<campo> de forms.py) #}
+        {% for error in campo.errors %}
+            <div class="invalid-feedback d-block">{{ error }}</div>
+        {% endfor %}
+    </div>
+{% endfor %}

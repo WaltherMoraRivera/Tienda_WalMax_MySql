@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% comment %}
+  contacto.html: formulario de contacto PÚBLICO (no requiere iniciar sesión).
+  Los mensajes se guardan en la tabla 'Mensaje' y se leen desde /admin/.
+{% endcomment %}
+
+{% block titulo %}Contacto{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h4 mb-1">Contacto</h1>
+                <p class="text-muted mb-4">¿Tienes dudas sobre algún producto? Escríbenos.</p>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% include 'productos/_campos_formulario.html' %}
+                    <button type="submit" class="btn btn-danger">Enviar mensaje</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% comment %}
+  formulario.html: la MISMA plantilla sirve para CREAR y para EDITAR un producto.
+  Las vistas crear_producto y editar_producto le pasan:
+    - form:   el formulario (vacío al crear, con datos al editar)
+    - titulo: el título de la página
+{% endcomment %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h4 mb-4">{{ titulo }}</h1>
+
+                {# enctype="multipart/form-data" es OBLIGATORIO para poder subir archivos (la imagen) #}
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {# csrf_token: token de seguridad que Django exige en todo formulario POST #}
+                    {% csrf_token %}
+                    {% include 'productos/_campos_formulario.html' %}
+
+                    <button type="submit" class="btn btn-danger">Guardar</button>
+                    <a href="{% url 'lista_productos' %}" class="btn btn-outline-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

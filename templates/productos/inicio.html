@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% comment %}
+  inicio.html: página de bienvenida (pública). Hereda el diseño de base.html
+  con {% extends %} y rellena los bloques 'titulo' y 'contenido'.
+{% endcomment %}
+
+{% block titulo %}Inicio{% endblock %}
+
+{% block contenido %}
+<div class="p-5 mb-4 bg-white border rounded-3 shadow-sm">
+    <h1 class="display-5 fw-bold">Bienvenido a Poké Market</h1>
+    <p class="fs-5 text-muted">
+        Sistema de gestión de productos desarrollado con Django y conectado a una
+        base de datos MySQL. Explora el catálogo, administra los productos (crear,
+        editar y eliminar) o escríbenos desde el formulario de contacto.
+    </p>
+    <a href="{% url 'catalogo' %}" class="btn btn-danger btn-lg me-2">Ver catálogo</a>
+    <a href="{% url 'lista_productos' %}" class="btn btn-outline-danger btn-lg me-2">Administrar productos</a>
+    <a href="{% url 'contacto' %}" class="btn btn-outline-secondary btn-lg">Contacto</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="card-title">🔒 Acceso protegido</h5>
+            <p class="card-text text-muted">El catálogo es público, pero administrar los productos exige iniciar sesión y tener permisos.</p>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="card-title">🗄️ Base de datos MySQL</h5>
+            <p class="card-text text-muted">Los productos, categorías y mensajes se guardan en MySQL.</p>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="card-title">⚙️ Panel de administración</h5>
+            <p class="card-text text-muted">También puedes gestionar todo desde <a href="{% url 'admin:index' %}">/admin/</a>.</p>
+        </div></div>
+    </div>
+</div>
+{% endblock %}

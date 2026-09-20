@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% comment %}
+  catalogo.html: catálogo PÚBLICO y de solo lectura. Muestra los productos como
+  tarjetas (cards de Bootstrap) y permite filtrar por categoría.
+  La vista catalogo le entrega: productos, categorias y categoria_activa.
+{% endcomment %}
+
+{% block titulo %}Catálogo{% endblock %}
+
+{% block contenido %}
+<h1 class="h3 mb-3">Catálogo de productos</h1>
+
+{# Filtros por categoría: cada botón es un enlace con ?categoria=<id> #}
+<ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+        <a class="nav-link {% if not categoria_activa %}active bg-danger{% else %}text-danger{% endif %}"
+           href="{% url 'catalogo' %}">Todas</a>
+    </li>
+    {% for categoria in categorias %}
+    <li class="nav-item">
+        {# Comparamos el id de cada categoría con la categoría seleccionada para marcarla como activa #}
+        <a class="nav-link {% if categoria.pk == categoria_activa %}active bg-danger{% else %}text-danger{% endif %}"
+           href="{% url 'catalogo' %}?categoria={{ categoria.pk }}">{{ categoria.nombre }}</a>
+    </li>
+    {% endfor %}
+</ul>
+
+{# row-cols-*: cuántas tarjetas caben por fila según el tamaño de la pantalla #}
+<div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+    {% for producto in productos %}
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}"
+                     class="card-img-top p-3" style="height: 170px; object-fit: contain;">
+            {% endif %}
+            <div class="card-body">
+                <span class="badge text-bg-secondary">{{ producto.categoria.nombre }}</span>
+                <h2 class="h6 card-title mt-2">{{ producto.nombre }}</h2>
+                <p class="card-text text-muted small">{{ producto.descripcion|truncatechars:90 }}</p>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <strong>${{ producto.precio|floatformat:"-2" }}</strong>
+                {% if producto.stock > 0 %}
+                    <span class="badge text-bg-success">Disponible</span>
+                {% else %}
+                    <span class="badge text-bg-danger">Agotado</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12"><p class="text-muted">No hay productos en esta categoría todavía.</p></div>
+    {% endfor %}
+</div>
+{% endblock %}
