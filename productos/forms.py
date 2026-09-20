@@ -100,7 +100,7 @@ class ProductoForm(forms.ModelForm):
         # widgets: cómo se dibuja cada campo en HTML. Aquí solo le agregamos
         # las clases de Bootstrap ("form-control", "form-select") para el estilo.
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej.: Súper Poción'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej.: Martillo de Uña'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'precio': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'stock': forms.NumberInput(attrs={'class': 'form-control'}),
