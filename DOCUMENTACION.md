@@ -1,6 +1,6 @@
 # DOCUMENTACIÓN — Programación Backend
 
-**Proyecto:** Poké Market (`tienda_backend`) — Django 4.2 con base de datos MySQL
+**Proyecto:** Ferretería Walmax (`tienda_backend`) — Django 4.2 con base de datos MySQL
 **Asignatura:** Programación Backend · Aprendizaje esperado 2.1 «Framework Backend»
 **Ítem I:** Implementa un proyecto en framework Django con conexión a base de datos MySQL
 
@@ -37,7 +37,7 @@ Está pensado para que puedas **reconstruir el proyecto desde cero** y también 
 
 ## 1. ¿Qué hace el proyecto?
 
-**Poké Market** es una aplicación web que permite **promocionar y administrar productos** (pociones, bayas, inciensos, etc.).
+**Ferretería Walmax** es una aplicación web que permite **promocionar y administrar productos** (herramientas, fijaciones, pinturas, etc.).
 
 | Funcionalidad | Quién puede usarla | Dónde |
 |---|---|---|
@@ -808,7 +808,7 @@ from productos.models import Categoria, Producto
 
 Categoria.objects.count()                         # cuántas categorías hay
 Producto.objects.filter(precio__lt=500)           # productos de menos de $500
-Categoria.objects.get(nombre='Bayas').productos.all()   # productos de una categoría
+Categoria.objects.get(nombre='Fijaciones').productos.all()   # productos de una categoría
 ```
 
 ---

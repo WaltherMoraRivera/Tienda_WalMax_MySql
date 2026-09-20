@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "poke-market",
+      "name": "ferreteria-walmax",
       "runtimeExecutable": "venv/Scripts/python.exe",
       "runtimeArgs": ["manage.py", "runserver", "8000"],
       "port": 8000

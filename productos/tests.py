@@ -72,19 +72,19 @@ class BaseTest(TestCase):
         # Cada prueba se ejecuta dentro de una transacción que se revierte al
         # terminar, así que una prueba nunca ensucia a las demás.
         cls.superusuario = User.objects.create_superuser('admin_test', 'a@test.cl', 'clave12345')
-        cls.pociones = Categoria.objects.create(nombre='Pociones', descripcion='Curan a tus Pokémon.')
-        cls.bayas = Categoria.objects.create(nombre='Bayas')
-        cls.pocion = Producto.objects.create(
-            nombre='Poción', descripcion='Restaura 20 PS de un Pokémon.',
-            precio=Decimal('300'), stock=10, categoria=cls.pociones)
-        cls.baya = Producto.objects.create(
-            nombre='Baya Aranja', descripcion='Cura los PS de un Pokémon.',
-            precio=Decimal('200'), stock=0, categoria=cls.bayas)
+        cls.herramientas = Categoria.objects.create(nombre='Herramientas', descripcion='Herramientas manuales de uso general.')
+        cls.fijaciones = Categoria.objects.create(nombre='Fijaciones')
+        cls.martillo = Producto.objects.create(
+            nombre='Martillo', descripcion='Martillo de acero con mango ergonómico.',
+            precio=Decimal('300'), stock=10, categoria=cls.herramientas)
+        cls.tornillo = Producto.objects.create(
+            nombre='Tornillo Autorroscante', descripcion='Tornillo para trabajos de carpintería.',
+            precio=Decimal('200'), stock=0, categoria=cls.fijaciones)
 
     def datos_producto(self, **cambios):
         """Datos válidos para el formulario de producto; 'cambios' los modifica."""
-        datos = {'nombre': 'Cinta Premier', 'descripcion': 'Cinta conmemorativa muy especial.',
-                 'precio': '150.50', 'stock': '10', 'categoria': self.pociones.pk}
+        datos = {'nombre': 'Sierra Circular', 'descripcion': 'Sierra circular de uso profesional.',
+                 'precio': '150.50', 'stock': '10', 'categoria': self.herramientas.pk}
         datos.update(cambios)
         return datos
 
@@ -105,15 +105,15 @@ class ModelosTests(BaseTest):
         self.assertEqual(connection.vendor, 'mysql')
 
     def test_producto_pertenece_a_una_categoria(self):
-        self.assertEqual(self.pocion.categoria, self.pociones)
+        self.assertEqual(self.martillo.categoria, self.herramientas)
         # related_name='productos' permite recorrer la relación al revés.
-        self.assertIn(self.pocion, self.pociones.productos.all())
-        self.assertEqual(str(self.pocion), 'Poción')
+        self.assertIn(self.martillo, self.herramientas.productos.all())
+        self.assertEqual(str(self.martillo), 'Martillo')
 
     def test_no_se_puede_borrar_una_categoria_con_productos(self):
         # on_delete=PROTECT protege los productos de un borrado accidental.
         with self.assertRaises(ProtectedError):
-            self.pociones.delete()
+            self.herramientas.delete()
 
 
 # ---------------------------------------------------------------------------
@@ -132,17 +132,17 @@ class AdminTests(BaseTest):
             self.assertEqual(self.client.get(ruta).status_code, 200, ruta)
 
     def test_buscar_y_filtrar_productos(self):
-        r = self.client.get('/admin/productos/producto/?q=Baya')
-        self.assertContains(r, 'Baya Aranja')
-        self.assertNotContains(r, 'Poción')
-        r = self.client.get(f'/admin/productos/producto/?categoria__id__exact={self.pociones.pk}')
-        self.assertContains(r, 'Poción')
-        self.assertNotContains(r, 'Baya Aranja')
+        r = self.client.get('/admin/productos/producto/?q=Tornillo')
+        self.assertContains(r, 'Tornillo Autorroscante')
+        self.assertNotContains(r, 'Martillo')
+        r = self.client.get(f'/admin/productos/producto/?categoria__id__exact={self.herramientas.pk}')
+        self.assertContains(r, 'Martillo')
+        self.assertNotContains(r, 'Tornillo Autorroscante')
 
     def test_el_admin_rechaza_datos_invalidos_con_nuestras_validaciones(self):
         casos = [
             ('/admin/productos/producto/add/',
-             {'nombre': 'ab', 'descripcion': 'corta', 'precio': '0', 'stock': '20000', 'categoria': self.pociones.pk},
+             {'nombre': 'ab', 'descripcion': 'corta', 'precio': '0', 'stock': '20000', 'categoria': self.herramientas.pk},
              ('nombre', 'descripcion', 'precio', 'stock')),
             ('/admin/productos/categoria/add/', {'nombre': 'a', 'descripcion': 'corta'}, ('nombre', 'descripcion')),
             ('/admin/productos/mensaje/add/',
@@ -159,11 +159,11 @@ class AdminTests(BaseTest):
 
     def test_crear_editar_y_eliminar_desde_el_admin(self):
         # Crear
-        r = self.client.post('/admin/productos/producto/add/', self.datos_producto(nombre='Cinta Ultra'))
+        r = self.client.post('/admin/productos/producto/add/', self.datos_producto(nombre='Taladro Pro'))
         self.assertEqual(r.status_code, 302)  # 302 = redirección tras guardar
-        nuevo = Producto.objects.get(nombre='Cinta Ultra')
+        nuevo = Producto.objects.get(nombre='Taladro Pro')
         # Editar
-        datos = self.datos_producto(nombre='Cinta Ultra', precio='999')
+        datos = self.datos_producto(nombre='Taladro Pro', precio='999')
         self.client.post(f'/admin/productos/producto/{nuevo.pk}/change/', datos)
         nuevo.refresh_from_db()
         self.assertEqual(nuevo.precio, Decimal('999'))
@@ -190,21 +190,21 @@ class CrudProductoTests(BaseTest):
         # CREATE (con imagen)
         r = self.client.post('/productos/nuevo/', {**self.datos_producto(), 'imagen': crear_imagen()})
         self.assertRedirects(r, '/productos/', fetch_redirect_response=False)
-        nuevo = Producto.objects.get(nombre='Cinta Premier')
+        nuevo = Producto.objects.get(nombre='Sierra Circular')
         self.assertEqual(nuevo.precio, Decimal('150.50'))
         self.assertTrue(nuevo.imagen.name.startswith('productos/'))
 
         # READ: aparece en la lista y se muestra el mensaje de éxito
         r = self.client.get('/productos/')
-        self.assertContains(r, 'Cinta Premier')
+        self.assertContains(r, 'Sierra Circular')
         self.assertContains(r, 'Producto creado correctamente')
 
         # UPDATE: el formulario llega con los datos actuales y se puede guardar
-        self.assertContains(self.client.get(f'/productos/{nuevo.pk}/editar/'), 'value="Cinta Premier"')
-        r = self.client.post(f'/productos/{nuevo.pk}/editar/', self.datos_producto(nombre='Cinta Premier X', stock='99'))
+        self.assertContains(self.client.get(f'/productos/{nuevo.pk}/editar/'), 'value="Sierra Circular"')
+        r = self.client.post(f'/productos/{nuevo.pk}/editar/', self.datos_producto(nombre='Sierra Circular X', stock='99'))
         self.assertRedirects(r, '/productos/', fetch_redirect_response=False)
         nuevo.refresh_from_db()
-        self.assertEqual((nuevo.nombre, nuevo.stock), ('Cinta Premier X', 99))
+        self.assertEqual((nuevo.nombre, nuevo.stock), ('Sierra Circular X', 99))
 
         # DELETE: un GET solo pide confirmación; el POST es el que borra
         self.assertContains(self.client.get(f'/productos/{nuevo.pk}/eliminar/'), '¿Eliminar este producto?')
@@ -214,8 +214,8 @@ class CrudProductoTests(BaseTest):
         self.assertFalse(Producto.objects.filter(pk=nuevo.pk).exists())
 
     def test_editar_sin_cambiar_el_nombre_no_choca_consigo_mismo(self):
-        r = self.client.post(f'/productos/{self.pocion.pk}/editar/',
-                             self.datos_producto(nombre='Poción', descripcion=self.pocion.descripcion))
+        r = self.client.post(f'/productos/{self.martillo.pk}/editar/',
+                             self.datos_producto(nombre='Martillo', descripcion=self.martillo.descripcion))
         self.assertRedirects(r, '/productos/', fetch_redirect_response=False)
 
     def test_producto_inexistente_da_error_404(self):
@@ -228,7 +228,7 @@ class CrudProductoTests(BaseTest):
         antes = self.contar_consultas('/productos/')
         Producto.objects.bulk_create([
             Producto(nombre=f'Extra {i}', descripcion='descripcion valida', precio=1, stock=1,
-                     categoria=self.bayas) for i in range(30)])
+                     categoria=self.fijaciones) for i in range(30)])
         self.assertEqual(self.contar_consultas('/productos/'), antes)
 
     def test_un_texto_malicioso_se_muestra_escapado(self):
@@ -245,7 +245,7 @@ class CrudProductoTests(BaseTest):
 class SeguridadTests(BaseTest):
 
     def rutas_privadas(self):
-        pk = self.pocion.pk
+        pk = self.martillo.pk
         return ['/productos/', '/productos/nuevo/', f'/productos/{pk}/editar/', f'/productos/{pk}/eliminar/']
 
     def test_sin_sesion_el_crud_redirige_a_admin_login(self):
@@ -266,7 +266,7 @@ class SeguridadTests(BaseTest):
 
         bueno = self.client.post('/admin/login/?next=/productos/', {'username': 'admin_test', 'password': 'clave12345'})
         self.assertRedirects(bueno, '/productos/', fetch_redirect_response=False)
-        self.assertContains(self.client.get('/productos/'), 'Poción')
+        self.assertContains(self.client.get('/productos/'), 'Martillo')
 
     def test_login_no_permite_redirigir_a_sitios_externos(self):
         r = self.client.post('/admin/login/?next=//sitio-malo.com/',
@@ -294,8 +294,8 @@ class SeguridadTests(BaseTest):
             with self.subTest(ruta=ruta):
                 r = self.client.get(ruta)
                 self.assertContains(r, 'Acceso denegado', status_code=403)  # usa templates/403.html
-        self.client.post(f'/productos/{self.pocion.pk}/eliminar/')
-        self.assertTrue(Producto.objects.filter(pk=self.pocion.pk).exists(), 'no debe poder borrar')
+        self.client.post(f'/productos/{self.martillo.pk}/eliminar/')
+        self.assertTrue(Producto.objects.filter(pk=self.martillo.pk).exists(), 'no debe poder borrar')
 
     def test_los_permisos_se_aplican_por_separado(self):
         staff = User.objects.create_user('solo_lectura', 's@t.cl', 'clave12345', is_staff=True)
@@ -303,8 +303,8 @@ class SeguridadTests(BaseTest):
         self.client.force_login(staff)
         self.assertEqual(self.client.get('/productos/').status_code, 200)        # puede ver la lista
         self.assertEqual(self.client.get('/productos/nuevo/').status_code, 403)  # pero no crear
-        self.assertEqual(self.client.get(f'/productos/{self.pocion.pk}/editar/').status_code, 403)
-        self.assertEqual(self.client.get(f'/productos/{self.pocion.pk}/eliminar/').status_code, 403)
+        self.assertEqual(self.client.get(f'/productos/{self.martillo.pk}/editar/').status_code, 403)
+        self.assertEqual(self.client.get(f'/productos/{self.martillo.pk}/eliminar/').status_code, 403)
 
 
 # ---------------------------------------------------------------------------
@@ -324,7 +324,7 @@ class ValidacionesProductoTests(BaseTest):
         casos = [  # (campo, valor inválido, texto que debe aparecer en el error)
             ('nombre', 'ab', 'al menos 3 caracteres'),
             ('nombre', '<script>', 'solo puede contener'),
-            ('nombre', 'poción', 'Ya existe un producto'),   # repetido, sin distinguir mayúsculas
+            ('nombre', 'martillo', 'Ya existe un producto'),   # repetido, sin distinguir mayúsculas
             ('descripcion', 'corta', 'al menos 10 caracteres'),
             ('descripcion', 'x' * 501, 'no puede superar los 500'),
             ('precio', '0', 'mayor que cero'),
@@ -374,7 +374,7 @@ class ContactoTests(BaseTest):
 
     def datos_contacto(self, **cambios):
         datos = {'nombre': 'Ana Pérez', 'email': 'ana@correo.cl', 'asunto': 'Consulta stock',
-                 'mensaje': 'Quisiera saber si tienen Master Ball.'}
+                 'mensaje': 'Quisiera saber si tienen taladros inalámbricos disponibles.'}
         datos.update(cambios)
         return datos
 
@@ -407,10 +407,10 @@ class CatalogoPublicoTests(BaseTest):
 
     def test_cualquier_visitante_ve_los_productos_con_precio_y_disponibilidad(self):
         r = self.client.get('/catalogo/')  # sin iniciar sesión
-        self.assertContains(r, 'Poción')
+        self.assertContains(r, 'Martillo')
         self.assertContains(r, '$300')
-        self.assertContains(r, 'Disponible')   # Poción tiene stock 10
-        self.assertContains(r, 'Agotado')      # Baya Aranja tiene stock 0
+        self.assertContains(r, 'Disponible')   # Martillo tiene stock 10
+        self.assertContains(r, 'Agotado')      # Tornillo Autorroscante tiene stock 0
 
     def test_es_solo_lectura(self):
         r = self.client.get('/catalogo/')
@@ -418,21 +418,21 @@ class CatalogoPublicoTests(BaseTest):
         self.assertNotContains(r, '/eliminar/')
 
     def test_se_puede_filtrar_por_categoria(self):
-        r = self.client.get(f'/catalogo/?categoria={self.bayas.pk}')
-        self.assertContains(r, 'Baya Aranja')
-        self.assertNotContains(r, 'Restaura 20 PS')  # descripción de la Poción
+        r = self.client.get(f'/catalogo/?categoria={self.fijaciones.pk}')
+        self.assertContains(r, 'Tornillo Autorroscante')
+        self.assertNotContains(r, 'Martillo de acero')  # descripción del Martillo
 
     def test_un_filtro_invalido_se_ignora(self):
         r = self.client.get('/catalogo/?categoria=abc')
         self.assertEqual(r.status_code, 200)
-        self.assertContains(r, 'Poción')
-        self.assertContains(r, 'Baya Aranja')
+        self.assertContains(r, 'Martillo')
+        self.assertContains(r, 'Tornillo Autorroscante')
 
     def test_no_hace_una_consulta_por_cada_producto(self):
         antes = self.contar_consultas('/catalogo/')
         Producto.objects.bulk_create([
             Producto(nombre=f'Extra {i}', descripcion='descripcion valida', precio=1, stock=1,
-                     categoria=self.bayas) for i in range(30)])
+                     categoria=self.fijaciones) for i in range(30)])
         self.assertEqual(self.contar_consultas('/catalogo/'), antes)
 
 
