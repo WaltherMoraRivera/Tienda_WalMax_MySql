@@ -3,51 +3,51 @@
     "model": "productos.categoria",
     "pk": 1,
     "fields": {
-      "nombre": "Pociones",
-      "descripcion": "Restauran los PS de tus Pokémon durante y después de las batallas."
+      "nombre": "Herramientas manuales",
+      "descripcion": "Herramientas de uso general para trabajos de construcción y reparación."
     }
   },
   {
     "model": "productos.categoria",
     "pk": 2,
     "fields": {
-      "nombre": "Revivir",
-      "descripcion": "Devuelven a la batalla a los Pokémon debilitados."
+      "nombre": "Fijaciones",
+      "descripcion": "Tornillos, clavos y otros elementos para unir y fijar materiales."
     }
   },
   {
     "model": "productos.categoria",
     "pk": 3,
     "fields": {
-      "nombre": "Bayas",
-      "descripcion": "Frutos con efectos curativos y de ayuda para la captura."
+      "nombre": "Pinturas y Barnices",
+      "descripcion": "Pinturas, esmaltes y barnices para interior y exterior."
     }
   },
   {
     "model": "productos.categoria",
     "pk": 4,
     "fields": {
-      "nombre": "Inciensos",
-      "descripcion": "Atraen Pokémon salvajes a tu ubicación durante un tiempo."
+      "nombre": "Eléctrico",
+      "descripcion": "Materiales e insumos para instalaciones eléctricas domiciliarias."
     }
   },
   {
     "model": "productos.categoria",
     "pk": 5,
     "fields": {
-      "nombre": "Huevos suerte",
-      "descripcion": "Potenciadores de experiencia para entrenadores dedicados."
+      "nombre": "Seguridad Industrial",
+      "descripcion": "Elementos de protección personal para trabajos de ferretería y construcción."
     }
   },
   {
     "model": "productos.producto",
     "pk": 1,
     "fields": {
-      "nombre": "Poción",
-      "descripcion": "Restaura 20 PS de un Pokémon. La cura básica de todo entrenador.",
-      "precio": "300.00",
-      "stock": 120,
-      "imagen": "productos/pocion.png",
+      "nombre": "Martillo de Uña",
+      "descripcion": "Martillo de acero forjado con mango ergonómico, ideal para clavar y extraer clavos.",
+      "precio": "6990.00",
+      "stock": 60,
+      "imagen": "productos/martillo.jpg",
       "categoria": 1,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -56,11 +56,11 @@
     "model": "productos.producto",
     "pk": 2,
     "fields": {
-      "nombre": "Superpoción",
-      "descripcion": "Restaura 50 PS de un Pokémon. Ideal para batallas más exigentes.",
-      "precio": "500.00",
-      "stock": 80,
-      "imagen": "productos/superpocion.png",
+      "nombre": "Destornillador Phillips",
+      "descripcion": "Destornillador punta Phillips N°2 con mango antideslizante para uso profesional.",
+      "precio": "2490.00",
+      "stock": 100,
+      "imagen": "productos/destornillador.jpg",
       "categoria": 1,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -69,11 +69,11 @@
     "model": "productos.producto",
     "pk": 3,
     "fields": {
-      "nombre": "Hiperpoción",
-      "descripcion": "Restaura 200 PS de un Pokémon. Recomendada antes de un gimnasio.",
-      "precio": "800.00",
+      "nombre": "Llave Inglesa Ajustable 10\"",
+      "descripcion": "Llave ajustable de acero cromado, apertura de mordaza de hasta 30 mm.",
+      "precio": "8990.00",
       "stock": 45,
-      "imagen": "productos/hiperpocion.png",
+      "imagen": "productos/llave_inglesa.jpg",
       "categoria": 1,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -82,11 +82,11 @@
     "model": "productos.producto",
     "pk": 4,
     "fields": {
-      "nombre": "Poción Mágica",
-      "descripcion": "Restaura por completo los PS de un Pokémon al instante.",
-      "precio": "1200.00",
-      "stock": 20,
-      "imagen": "productos/pocion_magica.png",
+      "nombre": "Alicate Universal 8\"",
+      "descripcion": "Alicate de corte y presión, fabricado en acero al cromo vanadio.",
+      "precio": "5990.00",
+      "stock": 55,
+      "imagen": "productos/alicate.jpg",
       "categoria": 1,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -95,11 +95,11 @@
     "model": "productos.producto",
     "pk": 5,
     "fields": {
-      "nombre": "Revivir",
-      "descripcion": "Revive a un Pokémon debilitado, devolviéndole la mitad de sus PS máximos.",
-      "precio": "1500.00",
-      "stock": 30,
-      "imagen": "productos/revivir.png",
+      "nombre": "Caja de Tornillos para Madera",
+      "descripcion": "Caja con 100 unidades de tornillos autorroscantes para madera, 1 1/2 pulgada.",
+      "precio": "3490.00",
+      "stock": 80,
+      "imagen": "productos/tornillos.jpg",
       "categoria": 2,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -108,11 +108,11 @@
     "model": "productos.producto",
     "pk": 6,
     "fields": {
-      "nombre": "Revivir Máximo",
-      "descripcion": "Revive a un Pokémon debilitado, devolviéndole todos sus PS.",
-      "precio": "2500.00",
-      "stock": 12,
-      "imagen": "productos/revivir_maximo.png",
+      "nombre": "Clavos de Acero 2\"",
+      "descripcion": "Bolsa de 1 kilo de clavos de acero galvanizado para uso general.",
+      "precio": "2990.00",
+      "stock": 70,
+      "imagen": "productos/clavos.jpg",
       "categoria": 2,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -121,11 +121,11 @@
     "model": "productos.producto",
     "pk": 7,
     "fields": {
-      "nombre": "Baya Aranja",
-      "descripcion": "Cura por completo los PS de un Pokémon si se la das a comer.",
-      "precio": "200.00",
-      "stock": 200,
-      "imagen": "productos/baya_aranja.png",
+      "nombre": "Pintura Látex Blanco 1 Galón",
+      "descripcion": "Pintura látex lavable para interiores, acabado mate, rendimiento aproximado de 40 m².",
+      "precio": "14990.00",
+      "stock": 35,
+      "imagen": "productos/pintura_latex.jpg",
       "categoria": 3,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -134,11 +134,11 @@
     "model": "productos.producto",
     "pk": 8,
     "fields": {
-      "nombre": "Baya Zidra",
-      "descripcion": "Facilita la captura de Pokémon difíciles de atrapar.",
-      "precio": "250.00",
-      "stock": 150,
-      "imagen": "productos/baya_zidra.png",
+      "nombre": "Esmalte Sintético Brillante 1/4 Galón",
+      "descripcion": "Esmalte sintético de alto brillo para madera y metal, secado rápido.",
+      "precio": "6490.00",
+      "stock": 40,
+      "imagen": "productos/esmalte_sintetico.jpg",
       "categoria": 3,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -147,11 +147,11 @@
     "model": "productos.producto",
     "pk": 9,
     "fields": {
-      "nombre": "Baya Meluce",
-      "descripcion": "Calma a un Pokémon salvaje y reduce sus posibilidades de huir.",
-      "precio": "350.00",
-      "stock": 90,
-      "imagen": "productos/baya_meluce.png",
+      "nombre": "Barniz Marino para Madera 1/4 Galón",
+      "descripcion": "Barniz protector resistente a la humedad, ideal para exteriores y muebles de madera.",
+      "precio": "9990.00",
+      "stock": 25,
+      "imagen": "productos/barniz_madera.jpg",
       "categoria": 3,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -160,11 +160,11 @@
     "model": "productos.producto",
     "pk": 10,
     "fields": {
-      "nombre": "Incienso Suerte",
-      "descripcion": "Aumenta la aparición de Pokémon durante 30 minutos en zonas con poca actividad.",
-      "precio": "900.00",
-      "stock": 60,
-      "imagen": "productos/incienso_suerte.png",
+      "nombre": "Cinta Aislante Eléctrica",
+      "descripcion": "Cinta aislante de PVC de 18 mm x 10 m, resistente a la humedad.",
+      "precio": "1290.00",
+      "stock": 150,
+      "imagen": "productos/cinta_aislante.jpg",
       "categoria": 4,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -173,11 +173,11 @@
     "model": "productos.producto",
     "pk": 11,
     "fields": {
-      "nombre": "Incienso Limpio",
-      "descripcion": "Atrae Pokémon de tipo agua, planta y bicho con un aroma fresco y natural.",
-      "precio": "900.00",
-      "stock": 55,
-      "imagen": "productos/incienso_limpio.png",
+      "nombre": "Cable Eléctrico THHN 12 AWG (rollo 10 m)",
+      "descripcion": "Cable de cobre THHN calibre 12 AWG, para instalaciones eléctricas residenciales.",
+      "precio": "8990.00",
+      "stock": 30,
+      "imagen": "productos/cable_electrico.jpg",
       "categoria": 4,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -186,11 +186,11 @@
     "model": "productos.producto",
     "pk": 12,
     "fields": {
-      "nombre": "Incienso Fulgor",
-      "descripcion": "Emite un brillo especial que atrae Pokémon raramente vistos en la zona.",
-      "precio": "950.00",
-      "stock": 25,
-      "imagen": "productos/incienso_fulgor.png",
+      "nombre": "Ampolleta LED E27 10W",
+      "descripcion": "Ampolleta LED de bajo consumo, luz cálida, equivalente a 75W incandescente.",
+      "precio": "2990.00",
+      "stock": 90,
+      "imagen": "productos/ampolleta_led.jpg",
       "categoria": 4,
       "creado": "2026-09-20T12:00:00Z"
     }
@@ -199,11 +199,11 @@
     "model": "productos.producto",
     "pk": 13,
     "fields": {
-      "nombre": "Huevo Suerte",
-      "descripcion": "Duplica la experiencia obtenida durante 30 minutos de juego.",
-      "precio": "1000.00",
-      "stock": 40,
-      "imagen": "productos/huevo_suerte.png",
+      "nombre": "Guantes de Trabajo de Cuero",
+      "descripcion": "Guantes de cuero reforzado para trabajos pesados, talla única.",
+      "precio": "4990.00",
+      "stock": 65,
+      "imagen": "productos/guantes_trabajo.jpg",
       "categoria": 5,
       "creado": "2026-09-20T12:00:00Z"
     }

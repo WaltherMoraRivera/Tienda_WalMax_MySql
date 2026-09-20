@@ -19,7 +19,7 @@ from django.db import models
 
 
 class Categoria(models.Model):
-    """Grupo al que pertenece un producto (ej.: Pociones, Pokéballs, Bayas)."""
+    """Grupo al que pertenece un producto (ej.: Herramientas, Fijaciones, Eléctrico)."""
 
     # CharField: texto corto. max_length es obligatorio (largo máximo).
     # unique=True: no pueden existir dos categorías con el mismo nombre.
