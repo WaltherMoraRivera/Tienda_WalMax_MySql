@@ -164,6 +164,10 @@ USE_TZ = True
 # ---------------------------------------------------------------------------
 STATIC_URL = 'static/'
 
+# STATICFILES_DIRS: carpeta del proyecto con archivos propios (logo, favicon).
+# Django los sirve desde /static/ (ej.: /static/images/logo.png).
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
 # MEDIA_ROOT: carpeta del disco donde se guardan las imágenes que suben los
 # usuarios (campo ImageField de Producto). MEDIA_URL: dirección web desde la
 # que se sirven. Se necesita la librería Pillow para trabajar con imágenes.

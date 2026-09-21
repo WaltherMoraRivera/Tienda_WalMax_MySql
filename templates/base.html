@@ -4,6 +4,7 @@
   pie de página). Las demás plantillas la "extienden" con {% extends %} y solo
   rellenan los bloques {% block %} que ella define (titulo y contenido).
 {% endcomment %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,6 +12,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {# block: hueco que cada página hija puede rellenar con su propio título #}
     <title>{% block titulo %}Inicio{% endblock %} · Ferretería Walmax</title>
+
+    {# Ícono de la pestaña del navegador (favicon) y del acceso directo en celulares #}
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/apple-touch-icon.png' %}">
+    <meta name="theme-color" content="#1F3A5F">
 
     {# Bootstrap 5 desde un CDN: da estilos listos (botones, tablas, formularios, menú) #}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -140,7 +147,10 @@
     <nav class="navbar navbar-expand-lg navbar-dark navbar-marca">
         <div class="container">
             {# {% url 'nombre' %} genera la dirección de una ruta a partir del name= de urls.py #}
-            <a class="navbar-brand fw-bold" href="{% url 'inicio' %}">Ferretería Walmax</a>
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'inicio' %}">
+                <img src="{% static 'images/logo.png' %}" alt="Logo de Ferretería Walmax" width="44" height="44">
+                <span>Ferretería Walmax</span>
+            </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
                 <span class="navbar-toggler-icon"></span>

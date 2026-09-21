@@ -98,7 +98,7 @@ Programacion_Backend/
 │   ├── carrito.py              ← clase Carrito (guardado en la sesión)
 │   ├── context_processors.py   ← contador del carrito y pedidos pendientes en el menú
 │   ├── urls.py                 ← rutas de la aplicación
-│   ├── tests.py                ← 83 pruebas automáticas (python manage.py test)
+│   ├── tests.py                ← 85 pruebas automáticas (python manage.py test)
 │   ├── migrations/0001_initial.py   ← «plano» para crear las tablas en MySQL
 │   ├── migrations/0002_pedidos_y_detalles.py ← agrega las tablas de pedidos
 │   └── fixtures/datos_iniciales.json ← datos de ejemplo (opcional)
@@ -147,7 +147,7 @@ python manage.py createsuperuser
 # 7. Iniciar el servidor
 python manage.py runserver
 
-# (Opcional) Ejecutar las 83 pruebas automáticas (usa una base temporal; no toca tus datos)
+# (Opcional) Ejecutar las 85 pruebas automáticas (usa una base temporal; no toca tus datos)
 python manage.py test
 ```
 
@@ -613,7 +613,7 @@ Detalles importantes:
 | 11 | **Eliminar** el producto (pantalla de confirmación) | CRUD: Delete |
 | 12 | Abrir `/admin/`: mostrar Categorías, Productos y Mensajes | **Uso del administrador de Django** |
 | 13 | En MySQL: `SELECT id, nombre, precio, stock FROM productos_producto;` | Los datos realmente están en MySQL |
-| 14 | (Opcional) `python manage.py test` | 83 pruebas automáticas en verde |
+| 14 | (Opcional) `python manage.py test` | 85 pruebas automáticas en verde |
 
 Comandos para el paso 2 y el 13 (te pedirán la contraseña del usuario `tienda_user`):
 
@@ -719,7 +719,7 @@ Las vistas usan `ModelForm` (lo que exige la guía), y se comprobó el ciclo com
 
 ## 7. Pruebas realizadas
 
-El proyecto incluye **83 pruebas automáticas** en `productos/tests.py`. Una prueba automática usa la aplicación como lo haría un usuario (abre páginas, envía formularios, inicia sesión) y comprueba el resultado. Se ejecutan con:
+El proyecto incluye **85 pruebas automáticas** en `productos/tests.py`. Una prueba automática usa la aplicación como lo haría un usuario (abre páginas, envía formularios, inicia sesión) y comprueba el resultado. Se ejecutan con:
 
 ```powershell
 python manage.py test
@@ -741,6 +741,7 @@ Django crea una base MySQL **temporal** (`test_tienda_backend`), corre las prueb
 | `CheckoutYPedidosTests` | Validación de cada campo; el pedido queda pendiente y **reserva** sin descontar; copia del precio; stock insuficiente; solo el dueño ve su pedido (404 a otros); no se borra un producto con pedidos |
 | `ValidacionDePedidosTests` | Validar descuenta el stock y registra al revisor; rechazar libera la reserva; doble validación ignorada; stock real insuficiente; permiso `validar_pedido` obligatorio; el admin no crea pedidos a mano ni borra los validados |
 | `PaletaTests` | Se usan los colores nuevos y no quedan restos del rojo anterior |
+| `LogoTests` | El menú muestra el logo, el `<head>` declara el favicon y los archivos existen |
 
 También se verificó visualmente la lista de productos, el catálogo público, el formulario con mensajes de error, la confirmación de borrado, la página 403 y la página de inicio, y se comprobó que el proyecto se reconstruye desde cero (entorno virtual nuevo con solo `pip install -r requirements.txt`, base vacía, `migrate` y `loaddata`).
 
@@ -809,7 +810,7 @@ También se verificó visualmente la lista de productos, el catálogo público, 
 |---|---|
 | `python manage.py runserver` | Inicia el servidor de desarrollo en <http://127.0.0.1:8000/> |
 | `python manage.py check` | Revisa que la configuración no tenga errores |
-| `python manage.py test` | Ejecuta las 83 pruebas automáticas (base temporal) |
+| `python manage.py test` | Ejecuta las 85 pruebas automáticas (base temporal) |
 | `python manage.py makemigrations` | Genera migraciones tras cambiar `models.py` |
 | `python manage.py migrate` | Aplica las migraciones a MySQL |
 | `python manage.py sqlmigrate productos 0001` | Muestra el SQL de una migración |
@@ -876,6 +877,10 @@ Todas las pruebas se ejecutaron contra **MySQL 8.0.46 con Python 3.12 en Windows
 | Fondo | `#F4F5F7` | Fondo de la página |
 
 Los colores se definen **una sola vez** como variables CSS en `templates/base.html` (`--wm-primario`, `--wm-acento`...). El rojo y el verde de Bootstrap se reservan para significados (errores, «Agotado», «Eliminar», «Disponible»).
+
+### 12.1b Logo e ícono del sitio
+
+El logo oficial (`Ferreteria_WalMax_Icono.png`, en la raíz del proyecto como archivo fuente) se recortó y se generó en varios tamaños dentro de `static/images/`: `logo.png` (menú, 512 px), `favicon.ico` (16–64 px), `favicon-32.png` y `apple-touch-icon.png` (180 px). `settings.py` declara `STATICFILES_DIRS = [BASE_DIR / 'static']` y `base.html` los enlaza con `{% load static %}` / `{% static %}` (logo junto al nombre en el menú, y favicon en la pestaña del navegador).
 
 ### 12.2 Detalle de producto
 

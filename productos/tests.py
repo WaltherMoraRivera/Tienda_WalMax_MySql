@@ -32,6 +32,7 @@ Mapa de las pruebas con la guía y los criterios de evaluación:
     CheckoutYPedidosTests        -> compra ficticia y reserva de stock
     ValidacionDePedidosTests     -> validación/rechazo por el administrador
     PaletaTests                  -> paleta de colores
+    LogoTests                    -> logo y favicon
 """
 
 import io
@@ -812,6 +813,21 @@ class PaletaTests(BaseTest):
         contenido = self.client.get('/').content.decode().lower()
         for rojo in ('#e3350d', '#c0392b', '#dc3545'):
             self.assertNotIn(rojo, contenido)
+
+
+class LogoTests(BaseTest):
+    """El logo oficial aparece en el menú y como ícono (favicon) de la pestaña."""
+
+    def test_menu_muestra_el_logo_y_el_head_declara_los_iconos(self):
+        r = self.client.get('/')
+        self.assertContains(r, '/static/images/logo.png')
+        self.assertContains(r, 'rel="icon" href="/static/images/favicon.ico"')
+        self.assertContains(r, 'rel="apple-touch-icon"')
+
+    def test_los_archivos_del_logo_existen(self):
+        from django.contrib.staticfiles import finders
+        for nombre in ('logo.png', 'favicon.ico', 'favicon-32.png', 'apple-touch-icon.png'):
+            self.assertIsNotNone(finders.find(f'images/{nombre}'), nombre)
 
 
 def tearDownModule():
