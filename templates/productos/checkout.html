@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% comment %}
+  checkout.html: datos de contacto + resumen. Recibe: form, lineas y total.
+{% endcomment %}
+
+{% block titulo %}Finalizar compra{% endblock %}
+
+{% block contenido %}
+<h1 class="h3 mb-3">Finalizar compra</h1>
+<div class="alert alert-info">
+    <strong>Compra ficticia:</strong> no se cobra nada. Al confirmar, tus productos quedan
+    <em>reservados</em> y un administrador validará el pedido.
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <form method="post" novalidate class="card card-body shadow-sm">
+            {% csrf_token %}
+            {% include 'productos/_campos_formulario.html' %}
+            <button type="submit" class="btn btn-acento btn-lg">Confirmar compra simulada</button>
+        </form>
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header">Resumen del pedido</div>
+            <ul class="list-group list-group-flush">
+                {% for linea in lineas %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ linea.cantidad }} × {{ linea.producto.nombre }}</span>
+                    <span>${{ linea.subtotal|floatformat:"-2" }}</span>
+                </li>
+                {% endfor %}
+                <li class="list-group-item d-flex justify-content-between fw-bold">
+                    <span>Total</span><span class="precio">${{ total|floatformat:"-2" }}</span>
+                </li>
+            </ul>
+        </div>
+        <a href="{% url 'carrito' %}" class="btn btn-link mt-2">← Volver al carrito</a>
+    </div>
+</div>
+{% endblock %}

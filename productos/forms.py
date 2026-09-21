@@ -26,7 +26,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 
-from .models import Categoria, Mensaje, Producto
+from .carrito import CANTIDAD_MAXIMA_POR_PRODUCTO
+from .models import Categoria, Mensaje, Pedido, Producto
 
 # ---------------------------------------------------------------------------
 # Constantes con los límites de las validaciones (fáciles de cambiar aquí).
@@ -259,3 +260,104 @@ class MensajeForm(forms.ModelForm):
             raise ValidationError('El mensaje no puede superar los 1000 caracteres.')
 
         return mensaje
+
+
+# ===========================================================================
+# Carrito de compras y checkout (compra ficticia)
+# ===========================================================================
+class CantidadForm(forms.Form):
+    """Cantidad de unidades al agregar un producto al carrito o actualizarlo."""
+
+    cantidad = forms.IntegerField(
+        label='Cantidad',
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+    )
+
+    def clean_cantidad(self):
+        """Cantidad: entre 1 y el máximo permitido por producto."""
+        cantidad = self.cleaned_data['cantidad']
+
+        if cantidad < 1:
+            raise ValidationError('La cantidad debe ser al menos 1.')
+        if cantidad > CANTIDAD_MAXIMA_POR_PRODUCTO:
+            raise ValidationError(
+                f'Puedes llevar como máximo {CANTIDAD_MAXIMA_POR_PRODUCTO} unidades de un mismo producto.')
+
+        return cantidad
+
+
+class PedidoForm(forms.ModelForm):
+    """Datos de contacto y despacho al finalizar la compra (checkout).
+
+    La compra es FICTICIA: estos datos no se usan para cobrar ni para enviar nada.
+    """
+
+    class Meta:
+        model = Pedido
+        fields = ['nombre', 'email', 'telefono', 'direccion', 'notas']
+        labels = {
+            'nombre': 'Nombre completo',
+            'email': 'Correo electrónico',
+            'telefono': 'Teléfono',
+            'direccion': 'Dirección de despacho',
+            'notas': 'Notas para el pedido (opcional)',
+        }
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'nombre@correo.com'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+56 9 1234 5678'}),
+            'direccion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Calle, número, comuna'}),
+            'notas': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def clean_nombre(self):
+        """Nombre: solo letras (con tildes), separadas por espacio, guion o apóstrofe."""
+        nombre = self.cleaned_data['nombre'].strip()
+
+        if len(nombre) < 3:
+            raise ValidationError('El nombre debe tener al menos 3 caracteres.')
+        if not re.fullmatch(r"[^\W\d_]+(?:[ '\-][^\W\d_]+)*", nombre):
+            raise ValidationError('El nombre solo puede contener letras y espacios.')
+
+        return nombre
+
+    def clean_email(self):
+        """Email: se guarda en minúsculas y no se aceptan correos temporales."""
+        email = self.cleaned_data['email'].strip().lower()
+
+        if email.split('@')[-1] in DOMINIOS_NO_PERMITIDOS:
+            raise ValidationError('No se aceptan correos temporales. Usa un correo personal.')
+
+        return email
+
+    def clean_telefono(self):
+        """Teléfono: de 8 a 12 dígitos, con un '+' opcional al inicio."""
+        telefono = self.cleaned_data['telefono'].strip()
+
+        # Quitamos espacios, guiones y paréntesis antes de revisar el formato,
+        # así "+56 9 1234-5678" y "+56912345678" se consideran iguales.
+        limpio = re.sub(r'[\s\-()]', '', telefono)
+        if not re.fullmatch(r'\+?\d{8,12}', limpio):
+            raise ValidationError('Ingresa un teléfono válido, por ejemplo +56 9 1234 5678.')
+
+        return limpio
+
+    def clean_direccion(self):
+        """Dirección: entre 10 y 200 caracteres."""
+        direccion = self.cleaned_data['direccion'].strip()
+
+        if len(direccion) < 10:
+            raise ValidationError('Escribe la dirección completa (calle, número y comuna).')
+        if len(direccion) > 200:
+            raise ValidationError('La dirección no puede superar los 200 caracteres.')
+
+        return direccion
+
+    def clean_notas(self):
+        """Notas (opcional): máximo 300 caracteres."""
+        notas = self.cleaned_data['notas'].strip()
+
+        if len(notas) > 300:
+            raise ValidationError('Las notas no pueden superar los 300 caracteres.')
+
+        return notas

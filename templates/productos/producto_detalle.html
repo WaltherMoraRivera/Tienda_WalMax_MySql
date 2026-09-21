@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% comment %}
+  producto_detalle.html: ficha de UN producto (pública). Recibe: producto,
+  sugeridos (2 a 3 de la misma categoría), form (cantidad) y en_carrito.
+{% endcomment %}
+
+{% block titulo %}{{ producto.nombre }}{% endblock %}
+
+{% block contenido %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'catalogo' %}">Catálogo</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalogo' %}?categoria={{ producto.categoria_id }}">{{ producto.categoria.nombre }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ producto.nombre }}</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}"
+                     class="card-img-top p-4" style="max-height: 420px; object-fit: contain;">
+            {% else %}
+                <div class="p-5 text-center text-muted">Sin imagen</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <span class="badge text-bg-secondary">{{ producto.categoria.nombre }}</span>
+        <h1 class="h3 mt-2">{{ producto.nombre }}</h1>
+        <p class="display-6 precio mb-2">${{ producto.precio|floatformat:"-2" }}</p>
+
+        {% if producto.disponible > 0 %}
+            <p><span class="badge text-bg-success">Disponible</span>
+               <span class="text-muted small ms-1">{{ producto.disponible }} unidad{{ producto.disponible|pluralize:"es" }}</span></p>
+        {% else %}
+            <p><span class="badge text-bg-danger">Agotado</span></p>
+        {% endif %}
+
+        <p>{{ producto.descripcion|linebreaksbr }}</p>
+
+        {% if producto.disponible > 0 %}
+        <form method="post" action="{% url 'carrito_agregar' producto.pk %}" class="row g-2 align-items-end">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <div class="col-auto">
+                <label for="cantidad" class="form-label mb-1">Cantidad</label>
+                <input type="number" name="cantidad" id="cantidad" value="1" min="1"
+                       max="{{ producto.disponible }}" class="form-control" style="width: 6rem;">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-acento btn-lg">Agregar al carrito</button>
+            </div>
+        </form>
+        {% endif %}
+
+        {% if en_carrito %}
+        <p class="mt-3 mb-0 small">Ya tienes <strong>{{ en_carrito }}</strong> en tu carrito.
+           <a href="{% url 'carrito' %}">Ver carrito</a></p>
+        {% endif %}
+    </div>
+</div>
+
+{% if sugeridos %}
+<h2 class="h5 mt-5 mb-3">También te puede interesar</h2>
+<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
+    {% for producto in sugeridos %}
+    <div class="col">
+        {# Los sugeridos se abren en la misma pestaña #}
+        {% include 'productos/_tarjeta_producto.html' %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

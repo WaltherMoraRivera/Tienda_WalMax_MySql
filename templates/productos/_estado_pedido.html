@@ -1,0 +1,2 @@
+{# _estado_pedido.html: insignia de color según el estado del pedido (variable: pedido) #}
+{% if pedido.estado == 'validado' %}<span class="badge text-bg-success">{{ pedido.get_estado_display }}</span>{% elif pedido.estado == 'rechazado' %}<span class="badge text-bg-danger">{{ pedido.get_estado_display }}</span>{% else %}<span class="badge badge-carrito">{{ pedido.get_estado_display }}</span>{% endif %}

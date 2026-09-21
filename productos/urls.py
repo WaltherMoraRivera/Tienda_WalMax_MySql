@@ -14,13 +14,27 @@ Una RUTA conecta una dirección web con una vista:
 
 from django.urls import path
 
-from . import views
+from . import views, views_compra
 
 urlpatterns = [
     # Páginas públicas (cualquier visitante puede verlas)
     path('', views.inicio, name='inicio'),
     path('catalogo/', views.catalogo, name='catalogo'),
+    path('catalogo/<int:pk>/', views.producto_detalle, name='producto_detalle'),
     path('contacto/', views.contacto, name='contacto'),
+
+    # Carrito de compras (públicas: funcionan con o sin sesión iniciada).
+    # Las que modifican el carrito solo aceptan POST (ver views_compra.py).
+    path('carrito/', views_compra.carrito_ver, name='carrito'),
+    path('carrito/agregar/<int:pk>/', views_compra.carrito_agregar, name='carrito_agregar'),
+    path('carrito/actualizar/<int:pk>/', views_compra.carrito_actualizar, name='carrito_actualizar'),
+    path('carrito/quitar/<int:pk>/', views_compra.carrito_quitar, name='carrito_quitar'),
+    path('carrito/vaciar/', views_compra.carrito_vaciar, name='carrito_vaciar'),
+
+    # Checkout (compra ficticia) y pedidos
+    path('checkout/', views_compra.checkout, name='checkout'),
+    path('pedidos/', views_compra.mis_pedidos, name='mis_pedidos'),
+    path('pedidos/<int:pk>/', views_compra.pedido_detalle, name='pedido_detalle'),
 
     # CRUD de productos (protegidas con @login_required y @permission_required)
     path('productos/', views.lista_productos, name='lista_productos'),

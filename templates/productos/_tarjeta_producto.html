@@ -1,0 +1,40 @@
+{% comment %}
+  _tarjeta_producto.html: tarjeta REUTILIZABLE de un producto. Se usa en el
+  catálogo y en los "sugeridos" del detalle.
+  Variables: producto (obligatoria) y nueva_pestana (si es verdadera, el enlace
+  al detalle se abre en una pestaña nueva, como pide el catálogo).
+{% endcomment %}
+<div class="card h-100 shadow-sm position-relative">
+    {% if producto.imagen %}
+        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}"
+             class="card-img-top p-3" style="height: 170px; object-fit: contain;">
+    {% endif %}
+    <div class="card-body">
+        <span class="badge text-bg-secondary">{{ producto.categoria.nombre }}</span>
+        <h2 class="h6 card-title mt-2">
+            {# stretched-link: hace clicable TODA la tarjeta. rel="noopener noreferrer" protege la pestaña de origen #}
+            <a href="{% url 'producto_detalle' producto.pk %}" class="stretched-link text-decoration-none text-dark"
+               {% if nueva_pestana %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ producto.nombre }}</a>
+        </h2>
+        <p class="card-text text-muted small">{{ producto.descripcion|truncatechars:90 }}</p>
+    </div>
+    <div class="card-footer">
+        <div class="d-flex justify-content-between align-items-center">
+            <strong class="precio">${{ producto.precio|floatformat:"-2" }}</strong>
+            {% if producto.disponible > 0 %}
+                <span class="badge text-bg-success">Disponible</span>
+            {% else %}
+                <span class="badge text-bg-danger">Agotado</span>
+            {% endif %}
+        </div>
+        {% if producto.disponible > 0 %}
+        {# position-relative z-2: el botón queda POR ENCIMA del enlace extendido y sí recibe el clic #}
+        <form method="post" action="{% url 'carrito_agregar' producto.pk %}" class="mt-2 position-relative z-2">
+            {% csrf_token %}
+            <input type="hidden" name="cantidad" value="1">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn btn-outline-marca btn-sm w-100">Agregar al carrito</button>
+        </form>
+        {% endif %}
+    </div>
+</div>

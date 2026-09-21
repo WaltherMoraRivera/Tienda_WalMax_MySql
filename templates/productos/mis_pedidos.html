@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% comment %}mis_pedidos.html: pedidos de este navegador / usuario. Recibe: pedidos.{% endcomment %}
+
+{% block titulo %}Mis pedidos{% endblock %}
+
+{% block contenido %}
+<h1 class="h3 mb-3">Mis pedidos</h1>
+{% if pedidos %}
+<table class="table align-middle bg-white shadow-sm">
+    <thead><tr><th>Pedido</th><th>Fecha</th><th>Estado</th><th class="text-end">Total</th><th></th></tr></thead>
+    <tbody>
+    {% for pedido in pedidos %}
+        <tr>
+            <td>#{{ pedido.pk }}</td>
+            <td>{{ pedido.creado|date:"d/m/Y H:i" }}</td>
+            <td>{% include 'productos/_estado_pedido.html' %}</td>
+            <td class="text-end precio">${{ pedido.total|floatformat:"-2" }}</td>
+            <td class="text-end"><a href="{% url 'pedido_detalle' pedido.pk %}" class="btn btn-outline-marca btn-sm">Ver</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-secondary">Aún no tienes pedidos. <a href="{% url 'catalogo' %}">Ir al catálogo</a></div>
+{% endif %}
+{% endblock %}

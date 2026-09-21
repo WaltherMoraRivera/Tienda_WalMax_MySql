@@ -82,6 +82,10 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 # 'messages' deja disponible {{ messages }} en las plantillas.
                 'django.contrib.messages.context_processors.messages',
+                # Propio: deja disponibles {{ carrito_cantidad }} y
+                # {{ pedidos_pendientes }} en todas las plantillas (ver
+                # productos/context_processors.py).
+                'productos.context_processors.tienda',
             ],
         },
     },

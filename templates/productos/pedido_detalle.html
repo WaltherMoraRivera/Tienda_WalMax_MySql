@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% comment %}pedido_detalle.html: resumen de un pedido. Recibe: pedido.{% endcomment %}
+
+{% block titulo %}Pedido #{{ pedido.pk }}{% endblock %}
+
+{% block contenido %}
+<h1 class="h3 mb-3">Pedido #{{ pedido.pk }} {% include 'productos/_estado_pedido.html' %}</h1>
+
+{% if pedido.estado == 'pendiente' %}
+<div class="alert alert-warning">Tus productos están <strong>reservados</strong>. El stock se descontará cuando un administrador valide el pedido.</div>
+{% elif pedido.estado == 'validado' %}
+<div class="alert alert-success">Pedido validado: el stock fue descontado.</div>
+{% else %}
+<div class="alert alert-danger">Pedido rechazado: las unidades reservadas fueron liberadas.</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <table class="table bg-white shadow-sm">
+            <thead><tr><th>Producto</th><th class="text-end">Precio</th><th class="text-end">Cant.</th><th class="text-end">Subtotal</th></tr></thead>
+            <tbody>
+            {% for detalle in pedido.detalles.all %}
+                <tr><td>{{ detalle.nombre_producto }}</td>
+                    <td class="text-end">${{ detalle.precio_unitario|floatformat:"-2" }}</td>
+                    <td class="text-end">{{ detalle.cantidad }}</td>
+                    <td class="text-end">${{ detalle.subtotal|floatformat:"-2" }}</td></tr>
+            {% endfor %}
+            </tbody>
+            <tfoot><tr><th colspan="3" class="text-end">Total</th><th class="text-end precio">${{ pedido.total|floatformat:"-2" }}</th></tr></tfoot>
+        </table>
+    </div>
+    <div class="col-md-5">
+        <div class="card card-body shadow-sm small">
+            <div><strong>Nombre:</strong> {{ pedido.nombre }}</div>
+            <div><strong>Correo:</strong> {{ pedido.email }}</div>
+            <div><strong>Teléfono:</strong> {{ pedido.telefono }}</div>
+            <div><strong>Dirección:</strong> {{ pedido.direccion }}</div>
+            {% if pedido.notas %}<div><strong>Notas:</strong> {{ pedido.notas }}</div>{% endif %}
+            <div><strong>Fecha:</strong> {{ pedido.creado|date:"d/m/Y H:i" }}</div>
+        </div>
+    </div>
+</div>
+<a href="{% url 'mis_pedidos' %}" class="btn btn-outline-marca mt-3">Mis pedidos</a>
+<a href="{% url 'catalogo' %}" class="btn btn-link mt-3">Seguir comprando</a>
+{% endblock %}

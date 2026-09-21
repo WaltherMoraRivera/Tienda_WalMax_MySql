@@ -27,6 +27,11 @@ Mapa de las pruebas con la guía y los criterios de evaluación:
     ValidacionesProductoTests    -> criterio 2.1.4 (validaciones personalizadas)
     ContactoTests                -> criterios 2.1.1 y 2.1.4
     CatalogoPublicoTests         -> criterio 2.1.1 (catálogo de productos)
+    DetalleProductoTests         -> vista de detalle y sugeridos
+    CarritoTests                 -> carrito en sesión (con y sin cuenta)
+    CheckoutYPedidosTests        -> compra ficticia y reserva de stock
+    ValidacionDePedidosTests     -> validación/rechazo por el administrador
+    PaletaTests                  -> paleta de colores
 """
 
 import io
@@ -43,7 +48,7 @@ from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from PIL import Image
 
-from .models import Categoria, Mensaje, Producto
+from .models import Categoria, Mensaje, Pedido, Producto, StockInsuficiente
 
 # Las imágenes que suben las pruebas se guardan en una carpeta temporal (no en
 # media/), y se borra al terminar (ver tearDownModule al final del archivo).
@@ -434,6 +439,379 @@ class CatalogoPublicoTests(BaseTest):
             Producto(nombre=f'Extra {i}', descripcion='descripcion valida', precio=1, stock=1,
                      categoria=self.fijaciones) for i in range(30)])
         self.assertEqual(self.contar_consultas('/catalogo/'), antes)
+
+
+# ---------------------------------------------------------------------------
+# Detalle de producto, carrito, pedidos y validación por el administrador
+# ---------------------------------------------------------------------------
+class DetalleProductoTests(BaseTest):
+    """Vista de detalle (pública) y productos sugeridos."""
+
+    def test_detalle_responde_200_y_muestra_datos(self):
+        r = self.client.get(f'/catalogo/{self.martillo.pk}/')
+        self.assertContains(r, 'Martillo')
+        self.assertContains(r, 'Agregar al carrito')
+
+    def test_producto_inexistente_da_404(self):
+        self.assertEqual(self.client.get('/catalogo/9999/').status_code, 404)
+
+    def test_producto_agotado_no_muestra_boton_agregar(self):
+        r = self.client.get(f'/catalogo/{self.tornillo.pk}/')
+        self.assertContains(r, 'Agotado')
+        self.assertNotContains(r, 'Agregar al carrito')
+
+    def test_sugeridos_son_de_la_misma_categoria_y_maximo_tres(self):
+        for i in range(5):
+            Producto.objects.create(nombre=f'Herr {i}', descripcion='descripcion valida', precio=10,
+                                    stock=5, categoria=self.herramientas)
+        r = self.client.get(f'/catalogo/{self.martillo.pk}/')
+        sugeridos = r.context['sugeridos']
+        self.assertEqual(len(sugeridos), 3)
+        for p in sugeridos:
+            self.assertEqual(p.categoria, self.herramientas)
+            self.assertNotEqual(p.pk, self.martillo.pk)
+
+    def test_sin_otros_productos_no_hay_seccion_de_sugeridos(self):
+        r = self.client.get(f'/catalogo/{self.martillo.pk}/')
+        self.assertEqual(r.context['sugeridos'], [])
+        self.assertNotContains(r, 'También te puede interesar')
+
+    def test_catalogo_abre_el_detalle_en_pestana_nueva(self):
+        r = self.client.get('/catalogo/')
+        self.assertContains(r, f'href="/catalogo/{self.martillo.pk}/"')
+        self.assertContains(r, 'target="_blank" rel="noopener noreferrer"')
+
+    def test_detalle_no_hace_una_consulta_por_sugerido(self):
+        url = f'/catalogo/{self.martillo.pk}/'
+        antes = self.contar_consultas(url)
+        Producto.objects.bulk_create([
+            Producto(nombre=f'Extra {i}', descripcion='descripcion valida', precio=1, stock=1,
+                     categoria=self.herramientas) for i in range(10)])
+        self.assertEqual(self.contar_consultas(url), antes)
+
+
+class CarritoTests(BaseTest):
+    """Carrito en sesión: funciona sin cuenta y con cuenta."""
+
+    def agregar(self, producto, cantidad=1, **extra):
+        return self.client.post(f'/carrito/agregar/{producto.pk}/', {'cantidad': cantidad}, **extra)
+
+    def carrito(self):
+        return self.client.session.get('carrito', {})
+
+    def test_agregar_sin_iniciar_sesion(self):
+        self.agregar(self.martillo, 2)
+        self.assertEqual(self.carrito(), {str(self.martillo.pk): 2})
+
+    def test_agregar_suma_a_lo_existente(self):
+        self.agregar(self.martillo, 2)
+        self.agregar(self.martillo, 3)
+        self.assertEqual(self.carrito()[str(self.martillo.pk)], 5)
+
+    def test_cantidad_se_recorta_al_disponible(self):
+        r = self.agregar(self.martillo, 50, follow=True)
+        self.assertEqual(self.carrito()[str(self.martillo.pk)], 10)
+        self.assertContains(r, 'Solo hay 10 unidades disponibles')
+
+    def test_no_se_agrega_un_producto_agotado(self):
+        self.agregar(self.tornillo)
+        self.assertEqual(self.carrito(), {})
+
+    def test_cantidades_invalidas_se_rechazan(self):
+        for valor in ('0', '-3', 'abc', '100', ''):
+            self.agregar(self.martillo, valor)
+        self.assertEqual(self.carrito(), {})
+
+    def test_agregar_por_get_da_405(self):
+        self.assertEqual(self.client.get(f'/carrito/agregar/{self.martillo.pk}/').status_code, 405)
+
+    def test_agregar_producto_inexistente_da_404(self):
+        self.assertEqual(self.client.post('/carrito/agregar/9999/', {'cantidad': 1}).status_code, 404)
+
+    def test_next_externo_se_ignora(self):
+        r = self.client.post(f'/carrito/agregar/{self.martillo.pk}/',
+                             {'cantidad': 1, 'next': 'https://malo.example.com/'})
+        self.assertRedirects(r, '/carrito/', fetch_redirect_response=False)
+
+    def test_next_del_mismo_sitio_se_respeta(self):
+        r = self.client.post(f'/carrito/agregar/{self.martillo.pk}/',
+                             {'cantidad': 1, 'next': '/catalogo/?categoria=1'})
+        self.assertRedirects(r, '/catalogo/?categoria=1', fetch_redirect_response=False)
+
+    def test_actualizar_quitar_y_vaciar(self):
+        self.agregar(self.martillo, 2)
+        self.client.post(f'/carrito/actualizar/{self.martillo.pk}/', {'cantidad': 4})
+        self.assertEqual(self.carrito()[str(self.martillo.pk)], 4)
+        self.client.post(f'/carrito/quitar/{self.martillo.pk}/')
+        self.assertEqual(self.carrito(), {})
+        self.agregar(self.martillo, 1)
+        self.client.post('/carrito/vaciar/')
+        self.assertEqual(self.carrito(), {})
+
+    def test_actualizar_producto_que_no_esta_en_el_carrito(self):
+        self.client.post(f'/carrito/actualizar/{self.martillo.pk}/', {'cantidad': 4})
+        self.assertEqual(self.carrito(), {})
+
+    def test_pagina_del_carrito_muestra_total(self):
+        self.agregar(self.martillo, 2)
+        r = self.client.get('/carrito/')
+        self.assertContains(r, '$600')
+        self.assertEqual(r.context['carrito_cantidad'], 2)
+
+    def test_carrito_vacio(self):
+        self.assertContains(self.client.get('/carrito/'), 'Tu carrito está vacío')
+
+    def test_el_carrito_sobrevive_al_iniciar_sesion(self):
+        self.agregar(self.martillo, 2)
+        self.client.login(username='admin_test', password='clave12345')
+        self.assertEqual(self.carrito()[str(self.martillo.pk)], 2)
+
+    def test_agregar_con_sesion_iniciada(self):
+        self.client.login(username='admin_test', password='clave12345')
+        self.agregar(self.martillo, 1)
+        self.assertEqual(self.carrito()[str(self.martillo.pk)], 1)
+
+    def test_producto_eliminado_se_quita_del_carrito(self):
+        extra = Producto.objects.create(nombre='Temporal', descripcion='descripcion valida',
+                                        precio=5, stock=3, categoria=self.herramientas)
+        self.agregar(extra, 1)
+        extra.delete()
+        self.client.get('/carrito/')
+        self.assertEqual(self.carrito(), {})
+
+    def test_carrito_excedido_bloquea_el_checkout(self):
+        self.agregar(self.martillo, 5)
+        Producto.objects.filter(pk=self.martillo.pk).update(stock=2)  # bajó el stock
+        r = self.client.get('/carrito/')
+        self.assertTrue(r.context['hay_problemas'])
+        self.assertRedirects(self.client.get('/checkout/'), '/carrito/', fetch_redirect_response=False)
+
+
+class CheckoutYPedidosTests(BaseTest):
+    """Finalizar compra: crea un pedido pendiente y RESERVA (no descuenta) el stock."""
+
+    def datos_pedido(self, **cambios):
+        datos = {'nombre': 'Ana Pérez', 'email': 'Ana@Correo.cl', 'telefono': '+56 9 1234 5678',
+                 'direccion': 'Av. Siempre Viva 742, Santiago', 'notas': ''}
+        datos.update(cambios)
+        return datos
+
+    def llenar_carrito(self, cantidad=3):
+        self.client.post(f'/carrito/agregar/{self.martillo.pk}/', {'cantidad': cantidad})
+
+    def test_checkout_con_carrito_vacio_redirige_al_catalogo(self):
+        self.assertRedirects(self.client.get('/checkout/'), '/catalogo/', fetch_redirect_response=False)
+
+    def test_compra_exitosa_reserva_pero_no_descuenta(self):
+        self.llenar_carrito(3)
+        r = self.client.post('/checkout/', self.datos_pedido())
+        pedido = Pedido.objects.get()
+        self.assertRedirects(r, f'/pedidos/{pedido.pk}/')
+        self.assertEqual(pedido.estado, Pedido.Estado.PENDIENTE)
+        self.assertEqual(pedido.email, 'ana@correo.cl')
+        self.assertEqual(pedido.telefono, '+56912345678')
+        self.assertEqual(pedido.total, Decimal('900'))
+        self.assertIsNone(pedido.usuario)
+        self.martillo.refresh_from_db()
+        self.assertEqual(self.martillo.stock, 10)       # el stock físico NO cambia
+        self.assertEqual(self.martillo.disponible, 7)   # pero 3 quedan reservadas
+        self.assertEqual(self.client.session.get('carrito', {}), {})  # carrito vacío
+
+    def test_pedido_con_sesion_iniciada_queda_asociado_al_usuario(self):
+        self.client.login(username='admin_test', password='clave12345')
+        self.llenar_carrito(1)
+        self.client.post('/checkout/', self.datos_pedido())
+        self.assertEqual(Pedido.objects.get().usuario, self.superusuario)
+
+    def test_el_pedido_guarda_una_copia_del_precio(self):
+        self.llenar_carrito(1)
+        self.client.post('/checkout/', self.datos_pedido())
+        Producto.objects.filter(pk=self.martillo.pk).update(precio=999)
+        self.assertEqual(Pedido.objects.get().total, Decimal('300'))
+
+    def test_validaciones_de_cada_campo(self):
+        self.llenar_carrito(1)
+        casos = {
+            'nombre': ['Al', 'Ana123'],
+            'email': ['sin-arroba', 'x@mailinator.com'],
+            'telefono': ['123', 'abcdefghij'],
+            'direccion': ['corta'],
+            'notas': ['x' * 301],
+        }
+        for campo, valores in casos.items():
+            for valor in valores:
+                r = self.client.post('/checkout/', self.datos_pedido(**{campo: valor}))
+                self.assertEqual(r.status_code, 200, f'{campo}={valor!r}')
+                self.assertIn(campo, r.context['form'].errors, f'{campo}={valor!r}')
+        self.assertEqual(Pedido.objects.count(), 0)
+
+    def test_stock_insuficiente_al_confirmar_no_crea_pedido(self):
+        self.llenar_carrito(5)
+        # Otro cliente reserva 8 unidades justo antes de confirmar.
+        Pedido.crear([(self.martillo.pk, 8)], {**self.datos_pedido(), 'email': 'o@correo.cl'})
+        r = self.client.post('/checkout/', self.datos_pedido(), follow=True)
+        self.assertEqual(Pedido.objects.count(), 1)
+        self.assertContains(r, 'superan el stock disponible')
+
+    def test_no_se_puede_reservar_mas_de_lo_disponible(self):
+        with self.assertRaises(StockInsuficiente):
+            Pedido.crear([(self.martillo.pk, 11)], self.datos_pedido())
+        self.assertEqual(Pedido.objects.count(), 0)
+
+    def test_reserva_reduce_disponible_en_catalogo(self):
+        Pedido.crear([(self.martillo.pk, 10)], self.datos_pedido())
+        r = self.client.get('/catalogo/')
+        self.assertContains(r, 'Agotado')  # las 10 unidades están reservadas
+        self.assertNotContains(r, 'Disponible')
+
+    def test_confirmacion_solo_la_ve_su_dueno(self):
+        self.llenar_carrito(1)
+        self.client.post('/checkout/', self.datos_pedido())
+        pedido = Pedido.objects.get()
+        self.assertEqual(self.client.get(f'/pedidos/{pedido.pk}/').status_code, 200)
+        self.assertContains(self.client.get('/pedidos/'), f'#{pedido.pk}')
+        otro = self.client_class()  # otro navegador, sin sesión
+        self.assertEqual(otro.get(f'/pedidos/{pedido.pk}/').status_code, 404)
+        self.assertNotContains(otro.get('/pedidos/'), f'#{pedido.pk}')
+
+    def test_un_revisor_con_permiso_puede_ver_cualquier_pedido(self):
+        pedido = Pedido.crear([(self.martillo.pk, 1)], self.datos_pedido())
+        self.client.login(username='admin_test', password='clave12345')
+        self.assertEqual(self.client.get(f'/pedidos/{pedido.pk}/').status_code, 200)
+
+    def test_pedidos_de_un_usuario_aparecen_al_iniciar_sesion(self):
+        Pedido.crear([(self.martillo.pk, 1)], self.datos_pedido(), usuario=self.superusuario)
+        self.client.login(username='admin_test', password='clave12345')
+        self.assertContains(self.client.get('/pedidos/'), 'Pendiente de validación')
+
+    def test_no_se_puede_eliminar_un_producto_con_pedidos(self):
+        Pedido.crear([(self.martillo.pk, 1)], self.datos_pedido())
+        with self.assertRaises(ProtectedError):
+            self.martillo.delete()
+
+    def test_la_vista_eliminar_muestra_error_y_no_500(self):
+        Pedido.crear([(self.martillo.pk, 1)], self.datos_pedido())
+        self.client.login(username='admin_test', password='clave12345')
+        r = self.client.post(f'/productos/{self.martillo.pk}/eliminar/', follow=True)
+        self.assertContains(r, 'forma parte de uno o más pedidos')
+        self.assertTrue(Producto.objects.filter(pk=self.martillo.pk).exists())
+
+
+class ValidacionDePedidosTests(BaseTest):
+    """El administrador valida (descuenta stock) o rechaza (libera la reserva)."""
+
+    URL = '/admin/productos/pedido/'
+
+    def setUp(self):
+        self.pedido = Pedido.crear(
+            [(self.martillo.pk, 4)],
+            {'nombre': 'Ana Pérez', 'email': 'ana@correo.cl', 'telefono': '+56912345678',
+             'direccion': 'Av. Siempre Viva 742', 'notas': ''})
+
+    def accion(self, nombre, pedido=None):
+        return self.client.post(self.URL, {
+            'action': nombre, '_selected_action': [(pedido or self.pedido).pk]}, follow=True)
+
+    def stock(self):
+        return Producto.objects.get(pk=self.martillo.pk).stock
+
+    def test_validar_descuenta_el_stock_y_registra_al_revisor(self):
+        self.client.login(username='admin_test', password='clave12345')
+        self.accion('validar_pedidos')
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, Pedido.Estado.VALIDADO)
+        self.assertEqual(self.pedido.revisado_por, self.superusuario)
+        self.assertIsNotNone(self.pedido.revisado_en)
+        self.assertEqual(self.stock(), 6)
+
+    def test_rechazar_libera_la_reserva_sin_tocar_el_stock(self):
+        self.client.login(username='admin_test', password='clave12345')
+        self.assertEqual(Producto.objects.get(pk=self.martillo.pk).disponible, 6)
+        self.accion('rechazar_pedidos')
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, Pedido.Estado.RECHAZADO)
+        self.assertEqual(self.stock(), 10)
+        self.assertEqual(Producto.objects.get(pk=self.martillo.pk).disponible, 10)
+
+    def test_validar_dos_veces_no_descuenta_dos_veces(self):
+        self.client.login(username='admin_test', password='clave12345')
+        self.accion('validar_pedidos')
+        r = self.accion('validar_pedidos')
+        self.assertEqual(self.stock(), 6)
+        self.assertContains(r, 'ya fue revisado')
+
+    def test_no_se_puede_rechazar_un_pedido_validado(self):
+        self.client.login(username='admin_test', password='clave12345')
+        self.accion('validar_pedidos')
+        self.accion('rechazar_pedidos')
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, Pedido.Estado.VALIDADO)
+
+    def test_validar_falla_si_el_stock_real_bajo(self):
+        self.client.login(username='admin_test', password='clave12345')
+        Producto.objects.filter(pk=self.martillo.pk).update(stock=2)  # alguien lo bajó a mano
+        r = self.accion('validar_pedidos')
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, Pedido.Estado.PENDIENTE)
+        self.assertEqual(self.stock(), 2)
+        self.assertContains(r, 'stock real es 2')
+
+    def test_staff_sin_el_permiso_validar_no_puede_ejecutar_la_accion(self):
+        staff = User.objects.create_user('staff', password='clave12345', is_staff=True)
+        staff.user_permissions.add(*Permission.objects.filter(codename__in=['view_pedido', 'change_pedido']))
+        self.client.login(username='staff', password='clave12345')
+        r = self.client.get(self.URL)
+        self.assertNotContains(r, 'Validar pedidos seleccionados')
+        self.accion('validar_pedidos')
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, Pedido.Estado.PENDIENTE)
+        self.assertEqual(self.stock(), 10)
+
+    def test_staff_con_el_permiso_validar_si_puede(self):
+        staff = User.objects.create_user('staff', password='clave12345', is_staff=True)
+        staff.user_permissions.add(*Permission.objects.filter(
+            codename__in=['view_pedido', 'change_pedido', 'validar_pedido']))
+        self.client.login(username='staff', password='clave12345')
+        self.accion('validar_pedidos')
+        self.assertEqual(self.stock(), 6)
+
+    def test_el_admin_no_permite_crear_pedidos_a_mano(self):
+        self.client.login(username='admin_test', password='clave12345')
+        self.assertEqual(self.client.get(self.URL + 'add/').status_code, 403)
+
+    def test_pedido_validado_no_se_puede_borrar_desde_el_admin(self):
+        self.client.login(username='admin_test', password='clave12345')
+        self.accion('validar_pedidos')
+        self.assertEqual(self.client.get(f'{self.URL}{self.pedido.pk}/delete/').status_code, 403)
+
+    def test_lista_admin_y_detalle_cargan_y_muestran_total(self):
+        self.client.login(username='admin_test', password='clave12345')
+        self.assertContains(self.client.get(self.URL), '$1.200')
+        self.assertContains(self.client.get(f'{self.URL}{self.pedido.pk}/change/'), 'Martillo')
+
+    def test_lista_de_productos_del_admin_muestra_reservado(self):
+        self.client.login(username='admin_test', password='clave12345')
+        r = self.client.get('/admin/productos/producto/')
+        self.assertContains(r, 'Reservado')
+
+    def test_el_menu_avisa_de_pedidos_pendientes_solo_a_quien_valida(self):
+        self.assertNotContains(self.client.get('/'), 'Validar pedidos')
+        self.client.login(username='admin_test', password='clave12345')
+        self.assertContains(self.client.get('/'), 'Validar pedidos')
+
+
+class PaletaTests(BaseTest):
+    """La paleta 'azul acero + amarillo señal' reemplazó al rojo del proyecto anterior."""
+
+    def test_variables_de_la_paleta(self):
+        r = self.client.get('/')
+        self.assertContains(r, '#1F3A5F')
+        self.assertContains(r, '#FFC20E')
+
+    def test_ya_no_quedan_restos_del_rojo_anterior(self):
+        contenido = self.client.get('/').content.decode().lower()
+        for rojo in ('#e3350d', '#c0392b', '#dc3545'):
+            self.assertNotIn(rojo, contenido)
 
 
 def tearDownModule():

@@ -32,6 +32,7 @@ Está pensado para que puedas **reconstruir el proyecto desde cero** y también 
 9. [Glosario](#9-glosario)
 10. [Anexo: credenciales y comandos útiles](#10-anexo-credenciales-y-comandos-útiles)
 11. [Recomendaciones fuera del alcance de la guía y riesgos del laboratorio](#11-recomendaciones-fuera-del-alcance-de-la-guía-y-riesgos-del-laboratorio)
+12. [Actualización: paleta, detalle de producto y carrito de compras](#12-actualización-paleta-detalle-de-producto-y-carrito-de-compras)
 
 ---
 
@@ -43,6 +44,10 @@ Está pensado para que puedas **reconstruir el proyecto desde cero** y también 
 |---|---|---|
 | Ver la página de inicio | Cualquier visitante | `/` |
 | **Ver el catálogo** de productos (solo lectura, con filtro por categoría) | Cualquier visitante | `/catalogo/` |
+| **Ver el detalle** de un producto (se abre en pestaña nueva) con 2–3 productos sugeridos de su categoría | Cualquier visitante | `/catalogo/<id>/` |
+| **Carrito de compras** (con o sin sesión iniciada) | Cualquier visitante | `/carrito/` |
+| **Finalizar compra** (simulada: no hay pago) y ver mis pedidos | Cualquier visitante | `/checkout/`, `/pedidos/` |
+| **Validar o rechazar pedidos** (descuenta el stock al validar) | Administradores con permiso `validar_pedido` | `/admin/productos/pedido/` |
 | Enviar un mensaje de contacto (se guarda en MySQL) | Cualquier visitante | `/contacto/` |
 | **Listar** productos (administración) | Sesión iniciada + permiso `view_producto` | `/productos/` |
 | **Crear** un producto | Sesión iniciada + permiso `add_producto` | `/productos/nuevo/` |
@@ -85,13 +90,17 @@ Programacion_Backend/
 │   └── urls.py                 ← rutas principales (admin + delegación a 'productos')
 │
 ├── productos/                  ← APLICACIÓN (la lógica del negocio)
-│   ├── models.py               ← tablas: Categoria, Producto, Mensaje
+│   ├── models.py               ← tablas: Categoria, Producto, Mensaje, Pedido, DetallePedido
 │   ├── admin.py                ← registro de los modelos en /admin/
 │   ├── forms.py                ← formularios (ModelForm) + VALIDACIONES personalizadas
 │   ├── views.py                ← vistas: inicio, catálogo público, CRUD de productos, contacto
+│   ├── views_compra.py         ← carrito, checkout y pedidos
+│   ├── carrito.py              ← clase Carrito (guardado en la sesión)
+│   ├── context_processors.py   ← contador del carrito y pedidos pendientes en el menú
 │   ├── urls.py                 ← rutas de la aplicación
-│   ├── tests.py                ← 32 pruebas automáticas (python manage.py test)
+│   ├── tests.py                ← 83 pruebas automáticas (python manage.py test)
 │   ├── migrations/0001_initial.py   ← «plano» para crear las tablas en MySQL
+│   ├── migrations/0002_pedidos_y_detalles.py ← agrega las tablas de pedidos
 │   └── fixtures/datos_iniciales.json ← datos de ejemplo (opcional)
 │
 ├── templates/                  ← PLANTILLAS HTML
@@ -99,7 +108,9 @@ Programacion_Backend/
 │   ├── 403.html                ← página «Acceso denegado» (falta de permisos)
 │   └── productos/
 │       ├── inicio.html · catalogo.html · lista.html · formulario.html
-│       ├── confirmar_eliminar.html · contacto.html
+│       ├── confirmar_eliminar.html · contacto.html · producto_detalle.html
+│       ├── carrito.html · checkout.html · pedido_detalle.html · mis_pedidos.html
+│       ├── _tarjeta_producto.html · _estado_pedido.html  ← fragmentos reutilizables
 │       └── _campos_formulario.html  ← fragmento reutilizable de campos de formulario
 │
 └── media/productos/            ← imágenes de los productos (subidas por formulario)
@@ -136,7 +147,7 @@ python manage.py createsuperuser
 # 7. Iniciar el servidor
 python manage.py runserver
 
-# (Opcional) Ejecutar las 32 pruebas automáticas (usa una base temporal; no toca tus datos)
+# (Opcional) Ejecutar las 83 pruebas automáticas (usa una base temporal; no toca tus datos)
 python manage.py test
 ```
 
@@ -602,7 +613,7 @@ Detalles importantes:
 | 11 | **Eliminar** el producto (pantalla de confirmación) | CRUD: Delete |
 | 12 | Abrir `/admin/`: mostrar Categorías, Productos y Mensajes | **Uso del administrador de Django** |
 | 13 | En MySQL: `SELECT id, nombre, precio, stock FROM productos_producto;` | Los datos realmente están en MySQL |
-| 14 | (Opcional) `python manage.py test` | 32 pruebas automáticas en verde |
+| 14 | (Opcional) `python manage.py test` | 83 pruebas automáticas en verde |
 
 Comandos para el paso 2 y el 13 (te pedirán la contraseña del usuario `tienda_user`):
 
@@ -708,7 +719,7 @@ Las vistas usan `ModelForm` (lo que exige la guía), y se comprobó el ciclo com
 
 ## 7. Pruebas realizadas
 
-El proyecto incluye **32 pruebas automáticas** en `productos/tests.py`. Una prueba automática usa la aplicación como lo haría un usuario (abre páginas, envía formularios, inicia sesión) y comprueba el resultado. Se ejecutan con:
+El proyecto incluye **83 pruebas automáticas** en `productos/tests.py`. Una prueba automática usa la aplicación como lo haría un usuario (abre páginas, envía formularios, inicia sesión) y comprueba el resultado. Se ejecutan con:
 
 ```powershell
 python manage.py test
@@ -725,6 +736,11 @@ Django crea una base MySQL **temporal** (`test_tienda_backend`), corre las prueb
 | `ValidacionesProductoTests` | Cada regla de `ProductoForm` con valores inválidos (nombre, descripción, precio, stock, categoría llena o vacía, imagen con extensión incorrecta, pesada o que no es imagen) |
 | `ContactoTests` | Es público, guarda en MySQL, normaliza el correo y valida cada campo |
 | `CatalogoPublicoTests` | Visible sin sesión, con precio y disponibilidad; solo lectura; filtro por categoría (y filtro inválido ignorado); sin consultas extra por producto |
+| `DetalleProductoTests` | Detalle público (200/404); producto agotado sin botón; sugeridos de la misma categoría (máx. 3, sin repetir el actual); el catálogo abre el detalle en pestaña nueva; sin consultas extra |
+| `CarritoTests` | Agregar/actualizar/quitar/vaciar; cantidades inválidas; recorte al stock disponible; GET no modifica (405); `next` externo ignorado; funciona sin cuenta y con cuenta; sobrevive al login; productos eliminados se limpian |
+| `CheckoutYPedidosTests` | Validación de cada campo; el pedido queda pendiente y **reserva** sin descontar; copia del precio; stock insuficiente; solo el dueño ve su pedido (404 a otros); no se borra un producto con pedidos |
+| `ValidacionDePedidosTests` | Validar descuenta el stock y registra al revisor; rechazar libera la reserva; doble validación ignorada; stock real insuficiente; permiso `validar_pedido` obligatorio; el admin no crea pedidos a mano ni borra los validados |
+| `PaletaTests` | Se usan los colores nuevos y no quedan restos del rojo anterior |
 
 También se verificó visualmente la lista de productos, el catálogo público, el formulario con mensajes de error, la confirmación de borrado, la página 403 y la página de inicio, y se comprobó que el proyecto se reconstruye desde cero (entorno virtual nuevo con solo `pip install -r requirements.txt`, base vacía, `migrate` y `loaddata`).
 
@@ -749,6 +765,7 @@ También se verificó visualmente la lista de productos, el catálogo público, 
 | La plantilla muestra un error extraño con un comentario `<!-- ... -->` | Django interpreta `{% %}` dentro de comentarios HTML | Usa `{# ... #}` o `{% comment %}` |
 | `localhost` conecta a un servidor distinto del esperado | En Windows `localhost` puede resolverse por IPv6 | Usa siempre `127.0.0.1` en `HOST` |
 | `pip install Django==4.2` da problemas con Python 3.14 | Django 4.2 no soporta Python 3.14 | Crea el entorno virtual con Python 3.12 (`py -3.12 -m venv venv`) |
+| Al iniciar el servidor aparece «Django version 5.2» (o cualquier versión distinta de 4.2) | Se está usando el Python **del sistema** en lugar del entorno virtual del proyecto: el equipo puede tener otra versión de Django instalada globalmente, y el `venv` puede estar vacío | 1) Activa el entorno: `venv\Scripts\activate`. 2) Instala las librerías **dentro** de él: `python -m pip install -r requirements.txt`. 3) Comprueba: `python -m django --version` debe decir `4.2.30`. **Nunca** instales las dependencias en el Python global: se mezclan las versiones de todos tus proyectos |
 
 ---
 
@@ -792,7 +809,7 @@ También se verificó visualmente la lista de productos, el catálogo público, 
 |---|---|
 | `python manage.py runserver` | Inicia el servidor de desarrollo en <http://127.0.0.1:8000/> |
 | `python manage.py check` | Revisa que la configuración no tenga errores |
-| `python manage.py test` | Ejecuta las 32 pruebas automáticas (base temporal) |
+| `python manage.py test` | Ejecuta las 83 pruebas automáticas (base temporal) |
 | `python manage.py makemigrations` | Genera migraciones tras cambiar `models.py` |
 | `python manage.py migrate` | Aplica las migraciones a MySQL |
 | `python manage.py sqlmigrate productos 0001` | Muestra el SQL de una migración |
@@ -845,3 +862,43 @@ Esta sección reúne lo que **no** pide la guía (por eso no se implementó) per
 ### 11.3 Alcance de la verificación
 
 Todas las pruebas se ejecutaron contra **MySQL 8.0.46 con Python 3.12 en Windows**. **No** se probó con MariaDB/XAMPP, con otra versión de Python ni en varios navegadores. Las pantallas que exigen sesión se revisaron visualmente con HTML generado por código, no iniciando sesión en un navegador real.
+
+---
+
+## 12. Actualización: paleta, detalle de producto y carrito de compras
+
+### 12.1 Paleta de colores «Azul acero + amarillo señal»
+
+| Rol | Color | Uso |
+|---|---|---|
+| Primario | `#1F3A5F` | Barra de navegación, títulos, botones principales (`btn-marca`) |
+| Acento | `#FFC20E` | Botones de compra (`btn-acento`), contador del carrito |
+| Fondo | `#F4F5F7` | Fondo de la página |
+
+Los colores se definen **una sola vez** como variables CSS en `templates/base.html` (`--wm-primario`, `--wm-acento`...). El rojo y el verde de Bootstrap se reservan para significados (errores, «Agotado», «Eliminar», «Disponible»).
+
+### 12.2 Detalle de producto
+
+Al hacer clic en una tarjeta del catálogo se abre `/catalogo/<id>/` **en una pestaña nueva** (`target="_blank" rel="noopener noreferrer"`). Muestra imagen, precio, disponibilidad, formulario de cantidad y de 2 a 3 productos **sugeridos de la misma categoría** (elegidos al azar; si la categoría tiene menos productos, se muestran los que existan).
+
+### 12.3 Carrito de compras
+
+- El carrito es un diccionario guardado en la **sesión** (`request.session['carrito'] = {id_producto: cantidad}`), así que funciona **sin iniciar sesión** y también con sesión iniciada. Se conserva al iniciar sesión, pero **se pierde al cerrarla** (Django borra la sesión completa).
+- Las acciones que modifican el carrito solo aceptan **POST** (con token CSRF).
+- Las cantidades se recortan al stock disponible y al tope de 99 unidades.
+
+### 12.4 Compra ficticia, reserva de stock y validación
+
+| Momento | Estado del pedido | Stock físico | Disponible para otros |
+|---|---|---|---|
+| El cliente confirma en `/checkout/` | Pendiente de validación | Sin cambios | Baja (las unidades quedan **reservadas**) |
+| Un administrador **valida** el pedido | Validado | **Se descuenta** | Sin cambios adicionales |
+| Un administrador **rechaza** el pedido | Rechazado | Sin cambios | Se **libera** la reserva |
+
+- **Disponible = stock − unidades en pedidos pendientes.** La reserva se calcula sumando los pedidos pendientes; **no se agregó ninguna columna** a la tabla `productos_producto`.
+- Validar/rechazar se hace en `/admin/productos/pedido/` con las acciones de la lista. Exige el permiso personalizado **`productos.validar_pedido`** (los superusuarios lo tienen; a un staff se le asigna desde el admin).
+- Todo ocurre en una **transacción** con `select_for_update()` y `F()`, para que dos compras simultáneas no reserven las mismas unidades y una validación repetida no descuente dos veces.
+- El pedido guarda una **copia** del nombre y del precio de cada producto; un producto con pedidos **no se puede eliminar** (`on_delete=PROTECT`) y la vista muestra un mensaje en vez de un error.
+- Un pedido solo lo ve quien lo hizo (desde el mismo navegador o con su cuenta) o un administrador con permiso `view_pedido`; para los demás responde 404.
+- La migración `0002_pedidos_y_detalles` solo **crea tablas nuevas** (`productos_pedido`, `productos_detallepedido`); no modifica las existentes.
+

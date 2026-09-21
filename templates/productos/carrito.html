@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% comment %}
+  carrito.html: contenido del carrito. Recibe: lineas, total y hay_problemas.
+{% endcomment %}
+
+{% block titulo %}Carrito{% endblock %}
+
+{% block contenido %}
+<h1 class="h3 mb-3">Tu carrito</h1>
+
+{% if lineas %}
+<div class="table-responsive">
+<table class="table align-middle bg-white shadow-sm">
+    <thead>
+        <tr><th>Producto</th><th class="text-end">Precio</th><th>Cantidad</th><th class="text-end">Subtotal</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for linea in lineas %}
+        <tr>
+            <td>
+                <a href="{% url 'producto_detalle' linea.producto.pk %}" class="text-decoration-none fw-semibold">{{ linea.producto.nombre }}</a>
+                {% if linea.excede %}
+                    <div class="text-danger small">Solo hay {{ linea.disponible }} disponible{{ linea.disponible|pluralize }}. Ajusta la cantidad.</div>
+                {% endif %}
+            </td>
+            <td class="text-end">${{ linea.producto.precio|floatformat:"-2" }}</td>
+            <td>
+                <form method="post" action="{% url 'carrito_actualizar' linea.producto.pk %}" class="d-flex gap-1">
+                    {% csrf_token %}
+                    <input type="number" name="cantidad" value="{{ linea.cantidad }}" min="1" max="99"
+                           class="form-control form-control-sm" style="width: 5rem;" aria-label="Cantidad de {{ linea.producto.nombre }}">
+                    <button type="submit" class="btn btn-outline-marca btn-sm">Actualizar</button>
+                </form>
+            </td>
+            <td class="text-end precio">${{ linea.subtotal|floatformat:"-2" }}</td>
+            <td class="text-end">
+                <form method="post" action="{% url 'carrito_quitar' linea.producto.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Quitar</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr><th colspan="3" class="text-end">Total</th><th class="text-end precio fs-5">${{ total|floatformat:"-2" }}</th><th></th></tr>
+    </tfoot>
+</table>
+</div>
+
+<div class="d-flex flex-wrap gap-2 justify-content-between">
+    <div class="d-flex gap-2">
+        <a href="{% url 'catalogo' %}" class="btn btn-outline-marca">Seguir comprando</a>
+        <form method="post" action="{% url 'carrito_vaciar' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger">Vaciar carrito</button>
+        </form>
+    </div>
+    {% if hay_problemas %}
+        <button class="btn btn-acento btn-lg" disabled>Finalizar compra</button>
+    {% else %}
+        <a href="{% url 'checkout' %}" class="btn btn-acento btn-lg">Finalizar compra</a>
+    {% endif %}
+</div>
+<p class="text-muted small mt-3">Esta tienda es una simulación: no se realiza ningún cobro real.</p>
+{% else %}
+<div class="alert alert-secondary">Tu carrito está vacío.
+    <a href="{% url 'catalogo' %}">Ir al catálogo</a></div>
+{% endif %}
+{% endblock %}
